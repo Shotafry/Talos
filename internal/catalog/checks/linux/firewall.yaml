@@ -1,0 +1,57 @@
+checks:
+  - id: FW-01
+    category: FIREWALL
+    os: linux
+    tier: core
+    description: "El cortafuegos UFW debe estar activo (perimetro de host)."
+    read: { type: exec, cmd: ["ufw", "status"] }
+    comparator: regex
+    expected: { good: "Status: active" }
+    points: 6
+    severity: high
+    criticality: ALTA
+    applicability:
+      anyOf:
+        - { package: ufw }
+    requiresPrivilege: true
+    remediation: "Activa el cortafuegos con `ufw enable` (asegura antes que el puerto SSH este permitido)."
+    ensControls: ["mp.com.1", "op.exp.2"]
+    syntaxConfidence: high
+
+  - id: FW-02
+    category: FIREWALL
+    os: linux
+    tier: core
+    description: "El cortafuegos firewalld debe estar en ejecucion."
+    read: { type: exec, cmd: ["firewall-cmd", "--state"] }
+    comparator: eq
+    expected: { good: "running" }
+    points: 6
+    severity: high
+    criticality: ALTA
+    applicability:
+      anyOf:
+        - { package: firewalld }
+    requiresPrivilege: false
+    remediation: "Activa firewalld con `systemctl enable --now firewalld`."
+    ensControls: ["mp.com.1", "op.exp.2"]
+    syntaxConfidence: high
+
+  - id: FW-03
+    category: FIREWALL
+    os: linux
+    tier: deep
+    description: "nftables debe tener un conjunto de reglas cargado (no vacio)."
+    read: { type: exec, cmd: ["nft", "list", "ruleset"] }
+    comparator: regex
+    expected: { good: "(chain|table)" }
+    points: 3
+    severity: medium
+    criticality: MEDIA
+    applicability:
+      anyOf:
+        - { package: nftables }
+    requiresPrivilege: true
+    remediation: "Define reglas nftables en /etc/nftables.conf y aplicalas; no dejes el ruleset vacio."
+    ensControls: ["mp.com.1", "op.exp.2"]
+    syntaxConfidence: review

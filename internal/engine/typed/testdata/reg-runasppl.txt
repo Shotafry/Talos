@@ -1,0 +1,4 @@
+
+HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa
+    RunAsPPL    REG_DWORD    0x2
+

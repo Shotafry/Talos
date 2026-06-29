@@ -1,0 +1,32 @@
+checks:
+  - id: WIN-AUD-01
+    category: AUDIT
+    os: windows
+    tier: core
+    description: "El registro de bloques de script de PowerShell debe estar activo (huella forense de scripts maliciosos)."
+    read: { type: registry, path: 'HKLM\SOFTWARE\Policies\Microsoft\Windows\PowerShell\ScriptBlockLogging', name: 'EnableScriptBlockLogging' }
+    comparator: eq
+    expected: { good: "1" }
+    points: 4
+    severity: medium
+    criticality: MEDIA
+    requiresPrivilege: false
+    remediation: "Activa el registro de bloques de script por GPO (Plantillas administrativas > Windows PowerShell) o EnableScriptBlockLogging=1."
+    ensControls: ["op.exp.8"]
+    syntaxConfidence: high
+
+  - id: WIN-AUD-02
+    category: AUDIT
+    os: windows
+    tier: deep
+    description: "Los eventos de creacion de procesos deben incluir la linea de comandos (caza de ejecucion sospechosa)."
+    read: { type: registry, path: 'HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System\Audit', name: 'ProcessCreationIncludeCmdLine_Enabled' }
+    comparator: eq
+    expected: { good: "1" }
+    points: 3
+    severity: low
+    criticality: BAJA
+    requiresPrivilege: false
+    remediation: "Activa la inclusion de la linea de comandos en los eventos 4688 (GPO 'Incluir linea de comandos en eventos de creacion de procesos') o ProcessCreationIncludeCmdLine_Enabled=1."
+    ensControls: ["op.exp.8"]
+    syntaxConfidence: high

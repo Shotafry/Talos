@@ -1,0 +1,80 @@
+checks:
+  - id: WIN-CRED-01
+    category: CREDS
+    os: windows
+    tier: core
+    description: "LSASS debe ejecutarse como proceso protegido (RunAsPPL) para frenar el volcado de credenciales (Mimikatz)."
+    read: { type: registry, path: 'HKLM\SYSTEM\CurrentControlSet\Control\Lsa', name: 'RunAsPPL' }
+    comparator: in
+    expected: { good: ["1", "2"] }
+    points: 8
+    severity: high
+    criticality: ALTA
+    requiresPrivilege: false
+    remediation: "Activa LSASS protegido: RunAsPPL=1 (o 2 con bloqueo UEFI) en HKLM\\SYSTEM\\CurrentControlSet\\Control\\Lsa y reinicia."
+    ensControls: ["op.acc.5", "op.exp.2"]
+    syntaxConfidence: high
+
+  - id: WIN-CRED-02
+    category: CREDS
+    os: windows
+    tier: core
+    description: "WDigest no debe cachear credenciales en texto claro en memoria (UseLogonCredential=0 o ausente)."
+    read: { type: registry, path: 'HKLM\SYSTEM\CurrentControlSet\Control\SecurityProviders\WDigest', name: 'UseLogonCredential' }
+    comparator: in
+    expected: { good: ["absent", "0"] }
+    points: 6
+    severity: high
+    criticality: ALTA
+    requiresPrivilege: false
+    remediation: "Asegura UseLogonCredential=0 (o que la clave no exista). En sistemas modernos es el valor por defecto."
+    ensControls: ["op.acc.5", "op.exp.2"]
+    syntaxConfidence: high
+
+  - id: WIN-CRED-03
+    category: CREDS
+    os: windows
+    tier: core
+    description: "El acceso anonimo (sesion nula) debe estar restringido para no enumerar cuentas y recursos."
+    read: { type: registry, path: 'HKLM\SYSTEM\CurrentControlSet\Control\Lsa', name: 'RestrictAnonymous' }
+    comparator: eq
+    expected: { good: "1" }
+    points: 5
+    severity: medium
+    criticality: MEDIA
+    requiresPrivilege: false
+    remediation: "Pon RestrictAnonymous=1 en HKLM\\SYSTEM\\CurrentControlSet\\Control\\Lsa."
+    ensControls: ["op.acc.5", "op.exp.2"]
+    syntaxConfidence: high
+
+  - id: WIN-CRED-04
+    category: CREDS
+    os: windows
+    tier: deep
+    description: "Credential Guard deberia estar en ejecucion para aislar secretos LSA por virtualizacion."
+    read: { type: cmdlet, cmd: ["[int]((Get-CimInstance -Namespace root\\Microsoft\\Windows\\DeviceGuard -ClassName Win32_DeviceGuard).SecurityServicesRunning -contains 1)"] }
+    comparator: eq
+    expected: { good: "1" }
+    points: 5
+    severity: medium
+    criticality: MEDIA
+    requiresPrivilege: false
+    remediation: "Habilita Credential Guard (requiere VBS/UEFI y hardware compatible) por GPO 'Activar la seguridad basada en virtualizacion'."
+    ensControls: ["op.acc.5", "op.exp.2"]
+    syntaxConfidence: review
+
+  - id: WIN-CRED-05
+    category: CREDS
+    os: windows
+    tier: deep
+    description: "La seguridad basada en virtualizacion (VBS) deberia estar en ejecucion (base de Credential Guard/HVCI)."
+    read: { type: cmdlet, cmd: ["(Get-CimInstance -Namespace root\\Microsoft\\Windows\\DeviceGuard -ClassName Win32_DeviceGuard).VirtualizationBasedSecurityStatus"] }
+    comparator: eq
+    expected: { good: "2" }
+    points: 3
+    severity: low
+    criticality: BAJA
+    requiresPrivilege: false
+    remediation: "Activa VBS por GPO/registro (DeviceGuard) en hardware con virtualizacion y arranque seguro."
+    ensControls: ["op.exp.2"]
+    syntaxConfidence: review

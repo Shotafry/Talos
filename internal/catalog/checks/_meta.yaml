@@ -1,0 +1,28 @@
+catalog:
+  version: "2026.06.1"          # CalVer AAAA.MM.parche - una version por release de catalogo
+  schemaVersion: 1              # version del ESQUEMA de ficha; el motor valida que lo soporta
+  generatedAt: "2026-06-25"
+  compat:
+    minEngine: "0.20.0"
+    minArgos: "0.20.0"
+  categories:
+    - { id: SSH,      label: "Acceso remoto SSH" }
+    - { id: KERNEL,   label: "Endurecimiento del kernel" }
+    - { id: FIREWALL, label: "Cortafuegos" }
+    - { id: USERS,    label: "Cuentas y autenticacion" }
+    - { id: PORTS,    label: "Puertos a la escucha" }
+    - { id: UPDATES,  label: "Actualizaciones de seguridad" }
+    - { id: MAC,      label: "Control de acceso obligatorio" }
+    - { id: AUDIT,    label: "Registro y auditoria" }
+    - { id: FS,       label: "Sistema de ficheros y permisos" }
+    - { id: SERVICES, label: "Servicios y demonios" }
+    - { id: TIME,     label: "Sincronizacion horaria" }
+    - { id: VULN,     label: "Condiciones de explotabilidad critica" }
+    # Windows (0.20.1)
+    - { id: SMB,      label: "Comparticion de archivos (SMB)" }
+    - { id: CREDS,    label: "Proteccion de credenciales" }
+    - { id: DEFENDER, label: "Antivirus (Microsoft Defender)" }
+    - { id: SYSTEM,   label: "Politicas del sistema" }
+    - { id: RDP,      label: "Escritorio remoto (RDP)" }
+    - { id: NAMERES,  label: "Resolucion de nombres" }
+    - { id: TLS,      label: "Cifrado de red (TLS/SChannel)" }

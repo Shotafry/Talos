@@ -1,0 +1,240 @@
+checks:
+  - id: KRNL-01
+    category: KERNEL
+    os: linux
+    tier: core
+    description: "ASLR (aleatorizacion del espacio de direcciones) al maximo dificulta la explotacion de memoria."
+    read: { type: sysctl, key: "kernel.randomize_va_space" }
+    comparator: eq
+    expected: { good: "2", medium: "1" }
+    points: 5
+    severity: high
+    criticality: ALTA
+    requiresPrivilege: false
+    remediation: "Pon `kernel.randomize_va_space = 2` en /etc/sysctl.d/ y aplica con `sysctl --system`."
+    ensControls: ["op.exp.2"]
+    syntaxConfidence: high
+
+  - id: KRNL-02
+    category: KERNEL
+    os: linux
+    tier: core
+    description: "Las cookies SYN protegen frente a inundaciones SYN (DoS)."
+    read: { type: sysctl, key: "net.ipv4.tcp_syncookies" }
+    comparator: eq
+    expected: { good: "1" }
+    points: 2
+    severity: medium
+    criticality: MEDIA
+    requiresPrivilege: false
+    remediation: "Pon `net.ipv4.tcp_syncookies = 1` en sysctl y aplica con `sysctl --system`."
+    ensControls: ["mp.s.4", "op.exp.2"]
+    syntaxConfidence: high
+
+  - id: KRNL-03
+    category: KERNEL
+    os: linux
+    tier: core
+    description: "No aceptar redirecciones ICMP evita reenrutado malicioso del trafico."
+    read: { type: sysctl, key: "net.ipv4.conf.all.accept_redirects" }
+    comparator: eq
+    expected: { good: "0" }
+    points: 2
+    severity: medium
+    criticality: MEDIA
+    requiresPrivilege: false
+    remediation: "Pon `net.ipv4.conf.all.accept_redirects = 0` (y `.default`) en sysctl."
+    ensControls: ["op.exp.2", "mp.com.1"]
+    syntaxConfidence: high
+
+  - id: KRNL-04
+    category: KERNEL
+    os: linux
+    tier: deep
+    description: "No aceptar redirecciones ICMP por defecto en interfaces nuevas."
+    read: { type: sysctl, key: "net.ipv4.conf.default.accept_redirects" }
+    comparator: eq
+    expected: { good: "0" }
+    points: 1
+    severity: low
+    criticality: BAJA
+    requiresPrivilege: false
+    remediation: "Pon `net.ipv4.conf.default.accept_redirects = 0` en sysctl."
+    ensControls: ["op.exp.2", "mp.com.1"]
+    syntaxConfidence: high
+
+  - id: KRNL-05
+    category: KERNEL
+    os: linux
+    tier: deep
+    description: "No enviar redirecciones ICMP (un host que no es router no debe hacerlo)."
+    read: { type: sysctl, key: "net.ipv4.conf.all.send_redirects" }
+    comparator: eq
+    expected: { good: "0" }
+    points: 1
+    severity: low
+    criticality: BAJA
+    requiresPrivilege: false
+    remediation: "Pon `net.ipv4.conf.all.send_redirects = 0` (y `.default`) en sysctl."
+    ensControls: ["op.exp.2", "mp.com.1"]
+    syntaxConfidence: high
+
+  - id: KRNL-06
+    category: KERNEL
+    os: linux
+    tier: core
+    description: "El filtrado de ruta inversa (rp_filter) mitiga el spoofing de direcciones de origen."
+    read: { type: sysctl, key: "net.ipv4.conf.all.rp_filter" }
+    comparator: in
+    expected: { good: ["1", "2"] }
+    points: 2
+    severity: low
+    criticality: BAJA
+    requiresPrivilege: false
+    remediation: "Pon `net.ipv4.conf.all.rp_filter = 1` en sysctl."
+    ensControls: ["op.exp.2"]
+    syntaxConfidence: review
+
+  - id: KRNL-07
+    category: KERNEL
+    os: linux
+    tier: deep
+    description: "No aceptar rutas de origen (source routing), que permiten eludir el enrutado."
+    read: { type: sysctl, key: "net.ipv4.conf.all.accept_source_route" }
+    comparator: eq
+    expected: { good: "0" }
+    points: 1
+    severity: low
+    criticality: BAJA
+    requiresPrivilege: false
+    remediation: "Pon `net.ipv4.conf.all.accept_source_route = 0` en sysctl."
+    ensControls: ["op.exp.2", "mp.com.1"]
+    syntaxConfidence: high
+
+  - id: KRNL-08
+    category: KERNEL
+    os: linux
+    tier: deep
+    description: "Ignorar pings de broadcast evita amplificacion ICMP (smurf)."
+    read: { type: sysctl, key: "net.ipv4.icmp_echo_ignore_broadcasts" }
+    comparator: eq
+    expected: { good: "1" }
+    points: 1
+    severity: low
+    criticality: BAJA
+    requiresPrivilege: false
+    remediation: "Pon `net.ipv4.icmp_echo_ignore_broadcasts = 1` en sysctl."
+    ensControls: ["mp.s.4", "op.exp.2"]
+    syntaxConfidence: high
+
+  - id: KRNL-09
+    category: KERNEL
+    os: linux
+    tier: core
+    description: "kptr_restrict oculta las direcciones del kernel a usuarios sin privilegios (dificulta exploits)."
+    read: { type: sysctl, key: "kernel.kptr_restrict" }
+    comparator: in
+    expected: { good: ["1", "2"] }
+    points: 2
+    severity: medium
+    criticality: MEDIA
+    requiresPrivilege: false
+    remediation: "Pon `kernel.kptr_restrict = 1` en sysctl."
+    ensControls: ["op.exp.2"]
+    syntaxConfidence: high
+
+  - id: KRNL-10
+    category: KERNEL
+    os: linux
+    tier: deep
+    description: "dmesg_restrict impide a usuarios sin privilegios leer el buffer del kernel."
+    read: { type: sysctl, key: "kernel.dmesg_restrict" }
+    comparator: eq
+    expected: { good: "1" }
+    points: 1
+    severity: low
+    criticality: BAJA
+    requiresPrivilege: false
+    remediation: "Pon `kernel.dmesg_restrict = 1` en sysctl."
+    ensControls: ["op.exp.2"]
+    syntaxConfidence: high
+
+  - id: KRNL-11
+    category: KERNEL
+    os: linux
+    tier: deep
+    description: "yama ptrace_scope limita que un proceso depure a otro (mitiga robo de credenciales)."
+    read: { type: sysctl, key: "kernel.yama.ptrace_scope" }
+    comparator: ge
+    expected: { good: "1" }
+    points: 1
+    severity: low
+    criticality: BAJA
+    requiresPrivilege: false
+    remediation: "Pon `kernel.yama.ptrace_scope = 1` en sysctl."
+    ensControls: ["op.exp.2"]
+    syntaxConfidence: high
+
+  - id: KRNL-12
+    category: KERNEL
+    os: linux
+    tier: deep
+    description: "protected_hardlinks evita ataques de enlaces duros en directorios compartidos."
+    read: { type: sysctl, key: "fs.protected_hardlinks" }
+    comparator: eq
+    expected: { good: "1" }
+    points: 1
+    severity: low
+    criticality: BAJA
+    requiresPrivilege: false
+    remediation: "Pon `fs.protected_hardlinks = 1` en sysctl."
+    ensControls: ["op.exp.2"]
+    syntaxConfidence: high
+
+  - id: KRNL-13
+    category: KERNEL
+    os: linux
+    tier: deep
+    description: "protected_symlinks evita ataques de enlaces simbolicos en directorios con sticky bit."
+    read: { type: sysctl, key: "fs.protected_symlinks" }
+    comparator: eq
+    expected: { good: "1" }
+    points: 1
+    severity: low
+    criticality: BAJA
+    requiresPrivilege: false
+    remediation: "Pon `fs.protected_symlinks = 1` en sysctl."
+    ensControls: ["op.exp.2"]
+    syntaxConfidence: high
+
+  - id: KRNL-14
+    category: KERNEL
+    os: linux
+    tier: deep
+    description: "suid_dumpable a 0 evita volcados de memoria de binarios SUID (pueden filtrar secretos)."
+    read: { type: sysctl, key: "fs.suid_dumpable" }
+    comparator: eq
+    expected: { good: "0" }
+    points: 2
+    severity: medium
+    criticality: MEDIA
+    requiresPrivilege: false
+    remediation: "Pon `fs.suid_dumpable = 0` en sysctl."
+    ensControls: ["op.exp.2"]
+    syntaxConfidence: high
+
+  - id: KRNL-15
+    category: KERNEL
+    os: linux
+    tier: deep
+    description: "Deshabilitar BPF para usuarios sin privilegios reduce superficie de exploits del kernel."
+    read: { type: sysctl, key: "kernel.unprivileged_bpf_disabled" }
+    comparator: eq
+    expected: { good: "1", medium: "2" }
+    points: 2
+    severity: medium
+    criticality: MEDIA
+    requiresPrivilege: false
+    remediation: "Pon `kernel.unprivileged_bpf_disabled = 1` en sysctl."
+    ensControls: ["op.exp.2"]
+    syntaxConfidence: high

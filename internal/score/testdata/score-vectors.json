@@ -1,0 +1,53 @@
+{
+  "_comment": "Vectores compartidos Talos (Go) <-> Argos (TS) para garantizar paridad de scoring. NA fuera del numerador y denominador.",
+  "vectors": [
+    {
+      "name": "mixto",
+      "verdicts": [
+        { "category": "SSH", "status": "PASS", "points": 8, "earned": 8 },
+        { "category": "SSH", "status": "FAIL", "points": 4, "earned": 0 },
+        { "category": "KERNEL", "status": "WARN", "points": 4, "earned": 2 },
+        { "category": "KERNEL", "status": "NA", "points": 2, "earned": 0 }
+      ],
+      "expected": {
+        "index": 63,
+        "band": "amarillo",
+        "categories": {
+          "SSH": { "index": 67, "band": "amarillo" },
+          "KERNEL": { "index": 50, "band": "amarillo" }
+        },
+        "counts": { "pass": 1, "warn": 1, "fail": 1, "na": 1 },
+        "excluded": { "na": 1, "noPrivilege": 0 }
+      }
+    },
+    {
+      "name": "toda-na-por-privilegio",
+      "verdicts": [
+        { "category": "MAC", "status": "NA", "points": 5, "earned": 0, "reason": "requiere privilegios de root (ejecuta con sudo)" }
+      ],
+      "expected": {
+        "index": 0,
+        "band": "n/d",
+        "categories": {
+          "MAC": { "index": 0, "band": "n/d" }
+        },
+        "counts": { "pass": 0, "warn": 0, "fail": 0, "na": 1 },
+        "excluded": { "na": 1, "noPrivilege": 1 }
+      }
+    },
+    {
+      "name": "verde",
+      "verdicts": [
+        { "category": "SSH", "status": "PASS", "points": 8, "earned": 8 },
+        { "category": "SSH", "status": "PASS", "points": 2, "earned": 2 }
+      ],
+      "expected": {
+        "index": 100,
+        "band": "verde",
+        "categories": { "SSH": { "index": 100, "band": "verde" } },
+        "counts": { "pass": 2, "warn": 0, "fail": 0, "na": 0 },
+        "excluded": { "na": 0, "noPrivilege": 0 }
+      }
+    }
+  ]
+}

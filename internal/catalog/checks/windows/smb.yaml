@@ -1,0 +1,64 @@
+checks:
+  - id: WIN-SMB-01
+    category: SMB
+    os: windows
+    tier: core
+    description: "El protocolo SMBv1 (obsoleto e inseguro, vector de WannaCry/EternalBlue) debe estar desactivado."
+    read: { type: registry, path: 'HKLM\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters', name: 'SMB1' }
+    comparator: in
+    expected: { good: ["absent", "0"] }
+    points: 10
+    severity: critical
+    criticality: CRITICA
+    requiresPrivilege: false
+    remediation: "Desactiva SMBv1: Disable-WindowsOptionalFeature -Online -FeatureName SMB1Protocol. La ausencia de la clave equivale a SMBv1 desactivado."
+    ensControls: ["mp.com.1", "op.exp.3"]
+    syntaxConfidence: high
+
+  - id: WIN-SMB-02
+    category: SMB
+    os: windows
+    tier: core
+    description: "El servidor SMB debe exigir la firma de paquetes (evita ataques de retransmision/relay)."
+    read: { type: registry, path: 'HKLM\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters', name: 'RequireSecuritySignature' }
+    comparator: eq
+    expected: { good: "1" }
+    points: 6
+    severity: high
+    criticality: ALTA
+    requiresPrivilege: false
+    remediation: "Exige la firma SMB del servidor (GPO 'Servidor de red Microsoft: firmar digitalmente las comunicaciones (siempre)') o RequireSecuritySignature=1."
+    ensControls: ["mp.com.2", "op.exp.2"]
+    syntaxConfidence: high
+
+  - id: WIN-SMB-03
+    category: SMB
+    os: windows
+    tier: core
+    description: "El cliente SMB debe exigir la firma de paquetes."
+    read: { type: registry, path: 'HKLM\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters', name: 'RequireSecuritySignature' }
+    comparator: eq
+    expected: { good: "1" }
+    points: 5
+    severity: medium
+    criticality: MEDIA
+    requiresPrivilege: false
+    remediation: "Exige la firma SMB del cliente (GPO 'Cliente de redes Microsoft: firmar digitalmente las comunicaciones (siempre)') o RequireSecuritySignature=1."
+    ensControls: ["mp.com.2", "op.exp.2"]
+    syntaxConfidence: high
+
+  - id: WIN-SMB-04
+    category: SMB
+    os: windows
+    tier: core
+    description: "Los inicios de sesion de invitado no seguros en SMB deben estar prohibidos (evita conexiones sin autenticar a recursos)."
+    read: { type: registry, path: 'HKLM\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters', name: 'AllowInsecureGuestAuth' }
+    comparator: in
+    expected: { good: ["absent", "0"] }
+    points: 5
+    severity: medium
+    criticality: MEDIA
+    requiresPrivilege: false
+    remediation: "Prohibe el acceso de invitado inseguro: AllowInsecureGuestAuth=0. La ausencia de la clave ya es seguro por defecto."
+    ensControls: ["op.acc.5", "op.exp.2"]
+    syntaxConfidence: high

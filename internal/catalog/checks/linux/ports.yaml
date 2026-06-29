@@ -1,0 +1,144 @@
+checks:
+  - id: PORTS-23
+    category: PORTS
+    os: linux
+    tier: core
+    description: "Telnet (23/tcp) no debe estar a la escucha: transmite credenciales en claro."
+    read: { type: ss, key: "23" }
+    comparator: exists
+    expected: { good: false }
+    points: 5
+    severity: critical
+    criticality: CRITICA
+    requiresPrivilege: false
+    remediation: "Desinstala telnetd (`apt purge telnetd`) y usa SSH."
+    ensControls: ["mp.com.1", "op.exp.2"]
+    syntaxConfidence: high
+
+  - id: PORTS-21
+    category: PORTS
+    os: linux
+    tier: core
+    description: "FTP (21/tcp) transmite credenciales en claro; usa SFTP/FTPS."
+    read: { type: ss, key: "21" }
+    comparator: exists
+    expected: { good: false }
+    points: 4
+    severity: high
+    criticality: ALTA
+    requiresPrivilege: false
+    remediation: "Sustituye FTP por SFTP/FTPS y detén el servicio FTP en claro."
+    ensControls: ["mp.com.1", "mp.com.2"]
+    syntaxConfidence: high
+
+  - id: PORTS-2049
+    category: PORTS
+    os: linux
+    tier: deep
+    description: "NFS (2049/tcp) no deberia exponerse salvo necesidad y con control de acceso."
+    read: { type: ss, key: "2049" }
+    comparator: exists
+    expected: { good: false }
+    points: 2
+    severity: medium
+    criticality: MEDIA
+    requiresPrivilege: false
+    remediation: "Restringe NFS a la red interna o desactivalo si no se usa."
+    ensControls: ["mp.com.1", "op.exp.2"]
+    syntaxConfidence: high
+
+  - id: PORTS-3389
+    category: PORTS
+    os: linux
+    tier: deep
+    description: "RDP (3389/tcp) raramente debe escuchar en un servidor Linux."
+    read: { type: ss, key: "3389" }
+    comparator: exists
+    expected: { good: false }
+    points: 2
+    severity: high
+    criticality: ALTA
+    requiresPrivilege: false
+    remediation: "Desactiva el servicio RDP (xrdp) si no es necesario; usa SSH."
+    ensControls: ["mp.com.1", "op.exp.2"]
+    syntaxConfidence: high
+
+  - id: PORTS-6379
+    category: PORTS
+    os: linux
+    tier: deep
+    description: "Redis (6379) no debe estar a la escucha en red sin autenticacion."
+    read: { type: ss, key: "6379" }
+    comparator: exists
+    expected: { good: false }
+    points: 3
+    severity: high
+    criticality: ALTA
+    requiresPrivilege: false
+    remediation: "Vincula Redis a 127.0.0.1 y exige contrasena; nunca expuesto sin auth."
+    ensControls: ["mp.com.4", "op.exp.2"]
+    syntaxConfidence: high
+
+  - id: PORTS-9200
+    category: PORTS
+    os: linux
+    tier: deep
+    description: "Elasticsearch (9200) no debe exponerse sin autenticacion."
+    read: { type: ss, key: "9200" }
+    comparator: exists
+    expected: { good: false }
+    points: 2
+    severity: high
+    criticality: ALTA
+    requiresPrivilege: false
+    remediation: "Vincula Elasticsearch a la red interna y activa seguridad/auth."
+    ensControls: ["mp.com.4", "op.exp.2"]
+    syntaxConfidence: high
+
+  - id: PORTS-27017
+    category: PORTS
+    os: linux
+    tier: deep
+    description: "MongoDB (27017) no debe exponerse sin autenticacion."
+    read: { type: ss, key: "27017" }
+    comparator: exists
+    expected: { good: false }
+    points: 2
+    severity: high
+    criticality: ALTA
+    requiresPrivilege: false
+    remediation: "Vincula MongoDB a 127.0.0.1/red interna y activa autenticacion."
+    ensControls: ["mp.com.4", "op.exp.2"]
+    syntaxConfidence: high
+
+  - id: PORTS-2375
+    category: PORTS
+    os: linux
+    tier: deep
+    description: "La API de Docker sin TLS (2375) da control total del host; nunca debe escuchar en red."
+    read: { type: ss, key: "2375" }
+    comparator: exists
+    expected: { good: false }
+    points: 4
+    severity: critical
+    criticality: CRITICA
+    requiresPrivilege: false
+    remediation: "No expongas el socket TCP de Docker; usa el socket unix o TLS mutuo."
+    ensControls: ["mp.com.1", "op.exp.2"]
+    syntaxConfidence: high
+
+  - id: PORTS-EXPOSE
+    category: PORTS
+    os: linux
+    tier: deep
+    description: "Los servicios de base de datos no deben escuchar en 0.0.0.0/[::] (exposicion publica)."
+    read: { type: ss }
+    comparator: eq
+    expected: { good: "none" }
+    points: 4
+    severity: high
+    criticality: ALTA
+    requiresPrivilege: false
+    remediation: "Vincula los servicios de BD a 127.0.0.1 o a la IP interna, no a 0.0.0.0."
+    ensControls: ["mp.com.4", "op.exp.2"]
+    syntaxConfidence: review

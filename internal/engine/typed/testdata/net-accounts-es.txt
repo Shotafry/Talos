@@ -1,0 +1,11 @@
+Tiempo antes del cierre forzado:                  Nunca
+Duración mín. de contraseña (días):               0
+Duración máx. de contraseña (días):               42
+Longitud mínima de contraseña:                    0
+Duración del historial de contraseñas:            Ninguna
+Umbral de bloqueo:                                10
+Duración de bloqueo (minutos):                    10
+Ventana de obs. de bloqueo (minutos):             10
+Rol del servidor:                                 ESTACION DE TRABAJO
+Se ha completado el comando correctamente.
+

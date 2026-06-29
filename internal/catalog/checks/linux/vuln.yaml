@@ -1,0 +1,85 @@
+checks:
+  # Pack por CONDICION de explotabilidad (NO por version: eso lo cubren Trivy/OSV/UPD-01).
+  # Detecta mitigaciones apagadas o features peligrosas que habilitan clases de exploits criticos.
+  - id: VULN-01
+    category: VULN
+    os: linux
+    tier: core
+    description: "Los espacios de nombres de usuario sin privilegio habilitan muchas escaladas locales y fugas de contenedor."
+    read: { type: sysctl, key: "kernel.unprivileged_userns_clone" }
+    comparator: eq
+    expected: { good: "0" }
+    points: 3
+    severity: high
+    criticality: ALTA
+    requiresPrivilege: false
+    remediation: "Pon `kernel.unprivileged_userns_clone = 0` en sysctl (si ninguna app legitima lo necesita)."
+    ensControls: ["op.exp.2"]
+    syntaxConfidence: review
+
+  - id: VULN-02
+    category: VULN
+    os: linux
+    tier: core
+    description: "Un /etc/ld.so.preload no vacio suele ser persistencia de rootkit o escalada (precarga de librerias en todo binario)."
+    read: { type: stat, path: "/etc/ld.so.preload" }
+    comparator: exists
+    expected: { good: false }
+    points: 5
+    severity: critical
+    criticality: CRITICA
+    requiresPrivilege: false
+    remediation: "Investiga y elimina /etc/ld.so.preload si no lo pusiste tu (suele indicar compromiso)."
+    ensControls: ["op.exp.6", "op.exp.2"]
+    syntaxConfidence: high
+
+  - id: VULN-03
+    category: VULN
+    os: linux
+    tier: deep
+    description: "Deshabilitar kexec evita cargar un kernel arbitrario sin reiniciar (evasion de arranque seguro)."
+    read: { type: sysctl, key: "kernel.kexec_load_disabled" }
+    comparator: eq
+    expected: { good: "1" }
+    points: 1
+    severity: low
+    criticality: BAJA
+    requiresPrivilege: false
+    remediation: "Pon `kernel.kexec_load_disabled = 1` en sysctl."
+    ensControls: ["op.exp.2"]
+    syntaxConfidence: high
+
+  - id: VULN-04
+    category: VULN
+    os: linux
+    tier: deep
+    description: "El patron de volcado de memoria no debe canalizarse a un programa externo (vector de algunas escaladas)."
+    read: { type: sysctl, key: "kernel.core_pattern" }
+    comparator: nregex
+    expected: { good: "^\\|" }
+    points: 2
+    severity: medium
+    criticality: MEDIA
+    requiresPrivilege: false
+    remediation: "Evita un `core_pattern` que empiece por `|` (tuberia a un programa) salvo que uses un gestor de cores controlado."
+    ensControls: ["op.exp.2"]
+    syntaxConfidence: review
+
+  - id: VULN-05
+    category: VULN
+    os: linux
+    tier: core
+    description: "Las reglas sudo con NOPASSWD permiten escalar a root sin contrasena (escalada trivial si se roba una sesion)."
+    read: { type: file, path: "/etc/sudoers" }
+    comparator: nregex
+    expected: { good: "NOPASSWD" }
+    points: 3
+    severity: high
+    criticality: ALTA
+    applicability:
+      anyOf:
+        - { file: "/etc/sudoers" }
+    requiresPrivilege: true
+    remediation: "Revisa /etc/sudoers y /etc/sudoers.d: evita NOPASSWD salvo para automatismos muy acotados."
+    ensControls: ["op.acc.2", "op.acc.6"]
+    syntaxConfidence: review

@@ -1,0 +1,274 @@
+checks:
+  # Pack "joyas por VERSION de paquete corregida" (tier deep = musculo del modo standalone
+  # OFFLINE: en nativo NO aporta sobre Trivy/OSV, que ya cubren CVEs por version). Detecta una
+  # instalacion SIN actualizar comparando la version instalada con la PRIMERA version corregida
+  # POR DISTRO+RELEASE (no upstream): los distros parchean por backport sin subir la version
+  # upstream, asi que un fixed-version upstream daria FALSOS POSITIVOS masivos (leccion CLAUDE
+  # 9.14). Solo se curan CVEs donde la release SALIO vulnerable y se corrigio con +debXuY/ubuntuN
+  # (las CVEs antiguas que ya salieron corregidas de fabrica las cubre Trivy/OSV, no este pack).
+  # Versiones-fix verificadas contra Debian Security Tracker + Ubuntu CVE Tracker (2026-06-25).
+  # comparator vge: PASS si instalada >= corregida (parcheada); FAIL si instalada < corregida
+  # (vulnerable). pkgver ausente -> NA (la vuln no aplica). applicability acota a distro+release.
+
+  # --- Debian 11 (bullseye) ---
+  - id: VULNPKG-PWNKIT-DEB11
+    category: VULN
+    os: linux
+    tier: deep
+    description: "PwnKit (CVE-2021-4034): escalada local a root por pkexec/polkit sin actualizar en Debian 11."
+    read: { type: pkgver, key: "policykit-1" }
+    comparator: vge
+    expected: { good: "0.105-31+deb11u1" }
+    points: 5
+    severity: critical
+    criticality: CRITICA
+    applicability:
+      allOf:
+        - { os: debian }
+        - { release: "11" }
+    requiresPrivilege: false
+    remediation: "Actualiza polkit: apt-get update && apt-get install --only-upgrade policykit-1 (corregido en 0.105-31+deb11u1)."
+    ensControls: ["op.exp.3"]
+    syntaxConfidence: review
+
+  - id: VULNPKG-SUDOEDIT-DEB11
+    category: VULN
+    os: linux
+    tier: deep
+    description: "sudoedit (CVE-2023-22809): edicion de ficheros arbitrarios via sudo sin actualizar en Debian 11."
+    read: { type: pkgver, key: "sudo" }
+    comparator: vge
+    expected: { good: "1.9.5p2-3+deb11u1" }
+    points: 4
+    severity: high
+    criticality: ALTA
+    applicability:
+      allOf:
+        - { os: debian }
+        - { release: "11" }
+    requiresPrivilege: false
+    remediation: "Actualiza sudo: apt-get install --only-upgrade sudo (corregido en 1.9.5p2-3+deb11u1)."
+    ensControls: ["op.exp.3"]
+    syntaxConfidence: review
+
+  - id: VULNPKG-TUNABLES-DEB11
+    category: VULN
+    os: linux
+    tier: deep
+    description: "Looney Tunables (CVE-2023-4911): escalada local por GLIBC_TUNABLES sin actualizar en Debian 11."
+    read: { type: pkgver, key: "libc6" }
+    comparator: vge
+    expected: { good: "2.31-13+deb11u7" }
+    points: 5
+    severity: critical
+    criticality: CRITICA
+    applicability:
+      allOf:
+        - { os: debian }
+        - { release: "11" }
+    requiresPrivilege: false
+    remediation: "Actualiza glibc: apt-get install --only-upgrade libc6 (corregido en 2.31-13+deb11u7)."
+    ensControls: ["op.exp.3"]
+    syntaxConfidence: review
+
+  - id: VULNPKG-ICONV-DEB11
+    category: VULN
+    os: linux
+    tier: deep
+    description: "glibc iconv (CVE-2024-2961): desbordamiento en conversion de charset sin actualizar en Debian 11."
+    read: { type: pkgver, key: "libc6" }
+    comparator: vge
+    expected: { good: "2.31-13+deb11u14" }
+    points: 4
+    severity: high
+    criticality: ALTA
+    applicability:
+      allOf:
+        - { os: debian }
+        - { release: "11" }
+    requiresPrivilege: false
+    remediation: "Actualiza glibc: apt-get install --only-upgrade libc6 (corregido en 2.31-13+deb11u14)."
+    ensControls: ["op.exp.3"]
+    syntaxConfidence: review
+
+  - id: VULNPKG-POLKIT3560-DEB11
+    category: VULN
+    os: linux
+    tier: deep
+    description: "polkit (CVE-2021-3560): escalada local por condicion de carrera en polkit sin actualizar en Debian 11."
+    read: { type: pkgver, key: "policykit-1" }
+    comparator: vge
+    expected: { good: "0.105-31+deb11u1" }
+    points: 4
+    severity: high
+    criticality: ALTA
+    applicability:
+      allOf:
+        - { os: debian }
+        - { release: "11" }
+    requiresPrivilege: false
+    remediation: "Actualiza polkit: apt-get install --only-upgrade policykit-1 (corregido en 0.105-31+deb11u1)."
+    ensControls: ["op.exp.3"]
+    syntaxConfidence: review
+
+  # --- Debian 12 (bookworm) ---
+  - id: VULNPKG-REGRESSHION-DEB12
+    category: VULN
+    os: linux
+    tier: deep
+    description: "regreSSHion (CVE-2024-6387): RCE precautenticacion en OpenSSH sin actualizar en Debian 12."
+    read: { type: pkgver, key: "openssh-server" }
+    comparator: vge
+    expected: { good: "1:9.2p1-2+deb12u3" }
+    points: 5
+    severity: critical
+    criticality: CRITICA
+    applicability:
+      allOf:
+        - { os: debian }
+        - { release: "12" }
+    requiresPrivilege: false
+    remediation: "Actualiza OpenSSH: apt-get install --only-upgrade openssh-server (corregido en 1:9.2p1-2+deb12u3)."
+    ensControls: ["op.exp.3"]
+    syntaxConfidence: review
+
+  - id: VULNPKG-TUNABLES-DEB12
+    category: VULN
+    os: linux
+    tier: deep
+    description: "Looney Tunables (CVE-2023-4911): escalada local por GLIBC_TUNABLES sin actualizar en Debian 12."
+    read: { type: pkgver, key: "libc6" }
+    comparator: vge
+    expected: { good: "2.36-9+deb12u3" }
+    points: 5
+    severity: critical
+    criticality: CRITICA
+    applicability:
+      allOf:
+        - { os: debian }
+        - { release: "12" }
+    requiresPrivilege: false
+    remediation: "Actualiza glibc: apt-get install --only-upgrade libc6 (corregido en 2.36-9+deb12u3)."
+    ensControls: ["op.exp.3"]
+    syntaxConfidence: review
+
+  - id: VULNPKG-ICONV-DEB12
+    category: VULN
+    os: linux
+    tier: deep
+    description: "glibc iconv (CVE-2024-2961): desbordamiento en conversion de charset sin actualizar en Debian 12."
+    read: { type: pkgver, key: "libc6" }
+    comparator: vge
+    expected: { good: "2.36-9+deb12u7" }
+    points: 4
+    severity: high
+    criticality: ALTA
+    applicability:
+      allOf:
+        - { os: debian }
+        - { release: "12" }
+    requiresPrivilege: false
+    remediation: "Actualiza glibc: apt-get install --only-upgrade libc6 (corregido en 2.36-9+deb12u7)."
+    ensControls: ["op.exp.3"]
+    syntaxConfidence: review
+
+  # --- Ubuntu 22.04 (jammy) ---
+  - id: VULNPKG-TUNABLES-UB2204
+    category: VULN
+    os: linux
+    tier: deep
+    description: "Looney Tunables (CVE-2023-4911): escalada local por GLIBC_TUNABLES sin actualizar en Ubuntu 22.04."
+    read: { type: pkgver, key: "libc6" }
+    comparator: vge
+    expected: { good: "2.35-0ubuntu3.4" }
+    points: 5
+    severity: critical
+    criticality: CRITICA
+    applicability:
+      allOf:
+        - { os: ubuntu }
+        - { release: "22.04" }
+    requiresPrivilege: false
+    remediation: "Actualiza glibc: apt-get install --only-upgrade libc6 (corregido en 2.35-0ubuntu3.4)."
+    ensControls: ["op.exp.3"]
+    syntaxConfidence: review
+
+  - id: VULNPKG-ICONV-UB2204
+    category: VULN
+    os: linux
+    tier: deep
+    description: "glibc iconv (CVE-2024-2961): desbordamiento en conversion de charset sin actualizar en Ubuntu 22.04."
+    read: { type: pkgver, key: "libc6" }
+    comparator: vge
+    expected: { good: "2.35-0ubuntu3.7" }
+    points: 4
+    severity: high
+    criticality: ALTA
+    applicability:
+      allOf:
+        - { os: ubuntu }
+        - { release: "22.04" }
+    requiresPrivilege: false
+    remediation: "Actualiza glibc: apt-get install --only-upgrade libc6 (corregido en 2.35-0ubuntu3.7)."
+    ensControls: ["op.exp.3"]
+    syntaxConfidence: review
+
+  - id: VULNPKG-REGRESSHION-UB2204
+    category: VULN
+    os: linux
+    tier: deep
+    description: "regreSSHion (CVE-2024-6387): RCE precautenticacion en OpenSSH sin actualizar en Ubuntu 22.04."
+    read: { type: pkgver, key: "openssh-server" }
+    comparator: vge
+    expected: { good: "1:8.9p1-3ubuntu0.10" }
+    points: 5
+    severity: critical
+    criticality: CRITICA
+    applicability:
+      allOf:
+        - { os: ubuntu }
+        - { release: "22.04" }
+    requiresPrivilege: false
+    remediation: "Actualiza OpenSSH: apt-get install --only-upgrade openssh-server (corregido en 1:8.9p1-3ubuntu0.10)."
+    ensControls: ["op.exp.3"]
+    syntaxConfidence: review
+
+  - id: VULNPKG-SUDOEDIT-UB2204
+    category: VULN
+    os: linux
+    tier: deep
+    description: "sudoedit (CVE-2023-22809): edicion de ficheros arbitrarios via sudo sin actualizar en Ubuntu 22.04."
+    read: { type: pkgver, key: "sudo" }
+    comparator: vge
+    expected: { good: "1.9.9-1ubuntu2.2" }
+    points: 4
+    severity: high
+    criticality: ALTA
+    applicability:
+      allOf:
+        - { os: ubuntu }
+        - { release: "22.04" }
+    requiresPrivilege: false
+    remediation: "Actualiza sudo: apt-get install --only-upgrade sudo (corregido en 1.9.9-1ubuntu2.2)."
+    ensControls: ["op.exp.3"]
+    syntaxConfidence: review
+
+  - id: VULNPKG-OPENSSL-PUNYCODE-UB2204
+    category: VULN
+    os: linux
+    tier: deep
+    description: "OpenSSL punycode (CVE-2022-3602/3786): desbordamiento en verificacion de certificado sin actualizar en Ubuntu 22.04."
+    read: { type: pkgver, key: "libssl3" }
+    comparator: vge
+    expected: { good: "3.0.2-0ubuntu1.7" }
+    points: 4
+    severity: high
+    criticality: ALTA
+    applicability:
+      allOf:
+        - { os: ubuntu }
+        - { release: "22.04" }
+    requiresPrivilege: false
+    remediation: "Actualiza OpenSSL: apt-get install --only-upgrade libssl3 (corregido en 3.0.2-0ubuntu1.7)."
+    ensControls: ["op.exp.3"]
+    syntaxConfidence: review

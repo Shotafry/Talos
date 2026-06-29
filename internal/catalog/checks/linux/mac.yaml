@@ -1,0 +1,38 @@
+checks:
+  - id: MAC-01
+    category: MAC
+    os: linux
+    tier: core
+    description: "SELinux debe estar en modo Enforcing (control de acceso obligatorio)."
+    read: { type: exec, cmd: ["getenforce"] }
+    comparator: eq
+    expected: { good: "Enforcing", medium: "Permissive" }
+    points: 4
+    severity: high
+    criticality: ALTA
+    applicability:
+      anyOf:
+        - { file: "/etc/selinux/config" }
+    requiresPrivilege: false
+    remediation: "Pon `SELINUX=enforcing` en /etc/selinux/config y reinicia."
+    ensControls: ["op.exp.2", "op.acc.2"]
+    syntaxConfidence: high
+
+  - id: MAC-02
+    category: MAC
+    os: linux
+    tier: core
+    description: "AppArmor debe estar cargado con perfiles aplicados (control de acceso obligatorio)."
+    read: { type: exec, cmd: ["aa-status"] }
+    comparator: regex
+    expected: { good: "profiles are in enforce mode" }
+    points: 4
+    severity: high
+    criticality: ALTA
+    applicability:
+      anyOf:
+        - { package: apparmor }
+    requiresPrivilege: true
+    remediation: "Instala y activa AppArmor (`systemctl enable --now apparmor`) y carga perfiles en enforce."
+    ensControls: ["op.exp.2", "op.acc.2"]
+    syntaxConfidence: review

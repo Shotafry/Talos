@@ -1,0 +1,5 @@
+# Talos se extrae a su propio repo (Linux). Forzar LF en todo el codigo/datos.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.exe binary

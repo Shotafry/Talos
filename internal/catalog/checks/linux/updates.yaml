@@ -1,0 +1,35 @@
+checks:
+  - id: UPD-01
+    category: UPDATES
+    os: linux
+    tier: core
+    description: "No deben quedar actualizaciones de seguridad pendientes de instalar."
+    read: { type: pkgmgr, op: "security", cmd: ["apt", "list", "--upgradable"] }
+    comparator: le
+    expected: { good: "0", medium: "5" }
+    points: 5
+    severity: high
+    criticality: ALTA
+    applicability:
+      anyOf:
+        - { package: apt }
+    requiresPrivilege: false
+    remediation: "Aplica las actualizaciones de seguridad: `apt-get update && apt-get upgrade`."
+    ensControls: ["op.exp.4"]
+    syntaxConfidence: review
+
+  - id: UPD-02
+    category: UPDATES
+    os: linux
+    tier: deep
+    description: "No debe haber un reinicio pendiente tras actualizaciones (parches del kernel sin aplicar)."
+    read: { type: stat, path: "/run/reboot-required" }
+    comparator: exists
+    expected: { good: false }
+    points: 2
+    severity: medium
+    criticality: MEDIA
+    requiresPrivilege: false
+    remediation: "Reinicia el sistema para aplicar los parches pendientes en una ventana de mantenimiento."
+    ensControls: ["op.exp.4"]
+    syntaxConfidence: high

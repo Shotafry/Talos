@@ -1,0 +1,48 @@
+checks:
+  - id: WIN-SYS-01
+    category: SYSTEM
+    os: windows
+    tier: core
+    description: "El Control de cuentas de usuario (UAC) debe estar habilitado."
+    read: { type: registry, path: 'HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System', name: 'EnableLUA' }
+    comparator: eq
+    expected: { good: "1" }
+    points: 8
+    severity: high
+    criticality: ALTA
+    requiresPrivilege: false
+    remediation: "Activa UAC: EnableLUA=1 en HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System y reinicia."
+    ensControls: ["op.acc.4", "op.exp.2"]
+    syntaxConfidence: high
+
+  - id: WIN-SYS-02
+    category: SYSTEM
+    os: windows
+    tier: core
+    description: "La ejecucion automatica (AutoRun/AutoPlay) debe estar desactivada en todas las unidades (vector de USB malicioso)."
+    read: { type: registry, path: 'HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer', name: 'NoDriveTypeAutoRun' }
+    comparator: eq
+    expected: { good: "255" }
+    points: 4
+    severity: medium
+    criticality: MEDIA
+    requiresPrivilege: false
+    remediation: "Desactiva AutoRun en todas las unidades: NoDriveTypeAutoRun=255 (0xFF) en la politica de Explorer."
+    ensControls: ["op.exp.2"]
+    syntaxConfidence: high
+
+  - id: WIN-SYS-03
+    category: SYSTEM
+    os: windows
+    tier: deep
+    description: "SmartScreen deberia estar activo para filtrar aplicaciones y descargas maliciosas."
+    read: { type: registry, path: 'HKLM\SOFTWARE\Policies\Microsoft\Windows\System', name: 'EnableSmartScreen' }
+    comparator: in
+    expected: { good: ["1", "RequireAdmin", "Warn"], medium: ["absent"] }
+    points: 3
+    severity: low
+    criticality: BAJA
+    requiresPrivilege: false
+    remediation: "Activa SmartScreen por GPO (EnableSmartScreen=1, nivel RequireAdmin). Ausente queda al ajuste local del usuario."
+    ensControls: ["op.exp.6"]
+    syntaxConfidence: high

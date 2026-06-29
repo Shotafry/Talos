@@ -1,0 +1,16 @@
+checks:
+  - id: TIME-01
+    category: TIME
+    os: linux
+    tier: core
+    description: "El reloj debe estar sincronizado por NTP (necesario para la correlacion forense de logs)."
+    read: { type: exec, cmd: ["timedatectl", "show", "-p", "NTPSynchronized", "--value"] }
+    comparator: eq
+    expected: { good: "yes" }
+    points: 2
+    severity: low
+    criticality: BAJA
+    requiresPrivilege: false
+    remediation: "Activa la sincronizacion: `timedatectl set-ntp true` (o configura chrony/ntpd)."
+    ensControls: ["op.exp.8"]
+    syntaxConfidence: high

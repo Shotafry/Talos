@@ -1,0 +1,274 @@
+checks:
+  - id: SSH-00
+    category: SSH
+    os: linux
+    tier: core
+    description: "El demonio SSH debe estar activo si es el medio de administracion."
+    read: { type: systemd, unit: "sshd" }
+    comparator: eq
+    expected: { good: "active" }
+    points: 3
+    severity: info
+    criticality: BAJA
+    applicability:
+      anyOf:
+        - { service: "sshd" }
+        - { service: "ssh" }
+    requiresPrivilege: false
+    remediation: "Si SSH es necesario: `systemctl enable --now ssh`. Si no, desinstala openssh-server."
+    ensControls: ["op.exp.2"]
+    syntaxConfidence: high
+
+  - id: SSH-01
+    category: SSH
+    os: linux
+    tier: core
+    description: "El acceso SSH directo como root debe estar prohibido; obliga a entrar con un usuario nominal y escalar."
+    read: { type: sshd_t, key: permitrootlogin }
+    comparator: eq
+    expected:
+      good: "no"
+      medium: ["prohibit-password", "without-password", "forced-commands-only"]
+    points: 8
+    severity: high
+    criticality: ALTA
+    applicability:
+      anyOf:
+        - { service: sshd }
+        - { service: ssh }
+        - { file: "/etc/ssh/sshd_config" }
+    requiresPrivilege: true
+    remediation: "En /etc/ssh/sshd_config establece PermitRootLogin no y recarga con systemctl reload ssh. Asegura un usuario con sudo antes de cerrar la sesion."
+    ensControls: ["op.acc.6", "op.exp.2"]
+    syntaxConfidence: high
+
+  - id: SSH-02
+    category: SSH
+    os: linux
+    tier: core
+    description: "La autenticacion por contrasena debe estar desactivada (solo clave publica) para frenar la fuerza bruta."
+    read: { type: sshd_t, key: passwordauthentication }
+    comparator: eq
+    expected: { good: "no" }
+    points: 6
+    severity: high
+    criticality: ALTA
+    applicability:
+      anyOf:
+        - { service: sshd }
+        - { service: ssh }
+        - { file: "/etc/ssh/sshd_config" }
+    requiresPrivilege: true
+    remediation: "Pon `PasswordAuthentication no` (y `KbdInteractiveAuthentication no`); instala tu clave antes de recargar."
+    ensControls: ["op.acc.6", "mp.com.3"]
+    syntaxConfidence: high
+
+  - id: SSH-03
+    category: SSH
+    os: linux
+    tier: deep
+    description: "La autenticacion por clave publica debe estar habilitada."
+    read: { type: sshd_t, key: pubkeyauthentication }
+    comparator: eq
+    expected: { good: "yes" }
+    points: 3
+    severity: medium
+    criticality: MEDIA
+    applicability:
+      anyOf:
+        - { service: sshd }
+        - { service: ssh }
+        - { file: "/etc/ssh/sshd_config" }
+    requiresPrivilege: true
+    remediation: "Pon `PubkeyAuthentication yes` en sshd_config."
+    ensControls: ["op.acc.6", "op.exp.2"]
+    syntaxConfidence: high
+
+  - id: SSH-04
+    category: SSH
+    os: linux
+    tier: core
+    description: "No se deben permitir contrasenas vacias en SSH."
+    read: { type: sshd_t, key: permitemptypasswords }
+    comparator: eq
+    expected: { good: "no" }
+    points: 6
+    severity: critical
+    criticality: CRITICA
+    applicability:
+      anyOf:
+        - { service: sshd }
+        - { service: ssh }
+        - { file: "/etc/ssh/sshd_config" }
+    requiresPrivilege: true
+    remediation: "Pon `PermitEmptyPasswords no` en sshd_config."
+    ensControls: ["op.acc.6", "op.exp.2"]
+    syntaxConfidence: high
+
+  - id: SSH-05
+    category: SSH
+    os: linux
+    tier: core
+    description: "Limita los intentos de autenticacion por conexion (anti fuerza bruta)."
+    read: { type: sshd_t, key: maxauthtries }
+    comparator: le
+    expected: { good: "3", medium: "6" }
+    points: 3
+    severity: medium
+    criticality: MEDIA
+    applicability:
+      anyOf:
+        - { service: sshd }
+        - { service: ssh }
+        - { file: "/etc/ssh/sshd_config" }
+    requiresPrivilege: true
+    remediation: "Pon `MaxAuthTries 3` en sshd_config y recarga el servicio."
+    ensControls: ["op.exp.2"]
+    syntaxConfidence: high
+
+  - id: SSH-07
+    category: SSH
+    os: linux
+    tier: deep
+    description: "Desactiva el reenvio X11 salvo necesidad grafica."
+    read: { type: sshd_t, key: x11forwarding }
+    comparator: eq
+    expected: { good: "no" }
+    points: 2
+    severity: low
+    criticality: BAJA
+    applicability:
+      anyOf:
+        - { service: sshd }
+        - { service: ssh }
+        - { file: "/etc/ssh/sshd_config" }
+    requiresPrivilege: true
+    remediation: "Pon `X11Forwarding no` en sshd_config."
+    ensControls: ["op.exp.2"]
+    syntaxConfidence: high
+
+  - id: SSH-08
+    category: SSH
+    os: linux
+    tier: deep
+    description: "Tiempo maximo de autenticacion acotado (limita conexiones colgadas sin autenticar)."
+    read: { type: sshd_t, key: logingracetime }
+    comparator: le
+    expected: { good: "60", medium: "120" }
+    points: 2
+    severity: low
+    criticality: BAJA
+    applicability:
+      anyOf:
+        - { service: sshd }
+        - { service: ssh }
+        - { file: "/etc/ssh/sshd_config" }
+    requiresPrivilege: true
+    remediation: "Pon `LoginGraceTime 60` en sshd_config (evita 0, que es ilimitado)."
+    ensControls: ["op.exp.2"]
+    syntaxConfidence: high
+
+  - id: SSH-11
+    category: SSH
+    os: linux
+    tier: deep
+    description: "Los cifrados (Ciphers) no deben incluir algoritmos debiles (CBC, arcfour, 3DES)."
+    read: { type: sshd_t, key: ciphers }
+    comparator: nregex
+    expected: { good: "(cbc|arcfour|3des|blowfish|cast128)" }
+    points: 3
+    severity: medium
+    criticality: MEDIA
+    applicability:
+      anyOf:
+        - { service: sshd }
+        - { service: ssh }
+        - { file: "/etc/ssh/sshd_config" }
+    requiresPrivilege: true
+    remediation: "Restringe `Ciphers` a algoritmos modernos (chacha20-poly1305, aes-gcm, aes-ctr) en sshd_config."
+    ensControls: ["mp.com.2"]
+    syntaxConfidence: high
+
+  - id: SSH-12
+    category: SSH
+    os: linux
+    tier: deep
+    description: "Los MAC no deben incluir algoritmos debiles (MD5, SHA1 truncado)."
+    read: { type: sshd_t, key: macs }
+    comparator: nregex
+    expected: { good: "(hmac-md5|hmac-sha1-96)" }
+    points: 2
+    severity: medium
+    criticality: MEDIA
+    applicability:
+      anyOf:
+        - { service: sshd }
+        - { service: ssh }
+        - { file: "/etc/ssh/sshd_config" }
+    requiresPrivilege: true
+    remediation: "Restringe `MACs` a algoritmos -etm modernos (hmac-sha2-256/512-etm, umac-128-etm)."
+    ensControls: ["mp.com.2"]
+    syntaxConfidence: high
+
+  - id: SSH-13
+    category: SSH
+    os: linux
+    tier: deep
+    description: "Los algoritmos de intercambio de claves (KEX) no deben incluir SHA1 ni grupos DH debiles."
+    read: { type: sshd_t, key: kexalgorithms }
+    comparator: nregex
+    expected: { good: "(group1-sha1|group-exchange-sha1|diffie-hellman-group14-sha1|gss-)" }
+    points: 2
+    severity: medium
+    criticality: MEDIA
+    applicability:
+      anyOf:
+        - { service: sshd }
+        - { service: ssh }
+        - { file: "/etc/ssh/sshd_config" }
+    requiresPrivilege: true
+    remediation: "Restringe `KexAlgorithms` a curve25519-sha256 y diffie-hellman-group16/18-sha512."
+    ensControls: ["mp.com.2"]
+    syntaxConfidence: review
+
+  - id: SSH-17
+    category: SSH
+    os: linux
+    tier: deep
+    description: "El nivel de registro de sshd debe ser informativo (huella forense de accesos)."
+    read: { type: sshd_t, key: loglevel }
+    comparator: in
+    expected: { good: ["INFO", "VERBOSE"] }
+    points: 2
+    severity: low
+    criticality: BAJA
+    applicability:
+      anyOf:
+        - { service: sshd }
+        - { service: ssh }
+        - { file: "/etc/ssh/sshd_config" }
+    requiresPrivilege: true
+    remediation: "Pon `LogLevel VERBOSE` en sshd_config (registra la huella de la clave usada)."
+    ensControls: ["op.exp.8"]
+    syntaxConfidence: review
+
+  - id: SSH-19
+    category: SSH
+    os: linux
+    tier: deep
+    description: "SSH debe integrarse con PAM (politicas de bloqueo, limites, MFA)."
+    read: { type: sshd_t, key: usepam }
+    comparator: eq
+    expected: { good: "yes" }
+    points: 2
+    severity: low
+    criticality: MEDIA
+    applicability:
+      anyOf:
+        - { service: sshd }
+        - { service: ssh }
+        - { file: "/etc/ssh/sshd_config" }
+    requiresPrivilege: true
+    remediation: "Pon `UsePAM yes` en sshd_config."
+    ensControls: ["op.acc.6", "op.exp.2"]
+    syntaxConfidence: high

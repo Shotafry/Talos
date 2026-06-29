@@ -1,0 +1,2 @@
+# binarios compilados (se generan con scripts/build.sh; se publican en la release)
+/dist/

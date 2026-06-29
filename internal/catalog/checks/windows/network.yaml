@@ -1,0 +1,34 @@
+checks:
+  - id: WIN-NET-01
+    category: NAMERES
+    os: windows
+    tier: core
+    description: "LLMNR (resolucion multicast de nombres) debe estar desactivado (vector de envenenamiento y robo de hashes)."
+    read: { type: registry, path: 'HKLM\SOFTWARE\Policies\Microsoft\Windows NT\DNSClient', name: 'EnableMulticast' }
+    comparator: eq
+    expected: { good: "0" }
+    points: 5
+    severity: medium
+    criticality: MEDIA
+    requiresPrivilege: false
+    remediation: "Desactiva LLMNR por GPO (Cliente DNS > Desactivar la resolucion de nombres multidifusion) o EnableMulticast=0. Ausente equivale a LLMNR activo."
+    ensControls: ["mp.com.1", "op.exp.2"]
+    syntaxConfidence: high
+
+  - id: WIN-TLS-01
+    category: TLS
+    os: windows
+    tier: deep
+    description: "TLS 1.2 debe estar disponible como protocolo de servidor SChannel (no deshabilitado)."
+    read: { type: registry, path: 'HKLM\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Server', name: 'Enabled' }
+    comparator: in
+    # SChannel marca "habilitado" como 1 o, idiomaticamente, 0xffffffff (=4294967295). Ausente
+    # = habilitado por defecto. Solo Enabled=0 (deshabilitado explicito) debe fallar.
+    expected: { good: ["absent", "1", "4294967295"] }
+    points: 3
+    severity: low
+    criticality: BAJA
+    requiresPrivilege: false
+    remediation: "No deshabilites TLS 1.2 en SChannel (Enabled=1 o clave ausente = habilitado por defecto). Deshabilita en cambio SSL 3.0/TLS 1.0/1.1."
+    ensControls: ["mp.com.2"]
+    syntaxConfidence: high

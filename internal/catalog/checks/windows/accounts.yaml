@@ -1,0 +1,50 @@
+checks:
+  - id: WIN-ACC-01
+    category: USERS
+    os: windows
+    tier: core
+    description: "La longitud minima de contrasena local debe ser robusta (>= 14)."
+    read: { type: netaccounts, key: minPwLen }
+    comparator: ge
+    expected: { good: "14", medium: "8" }
+    points: 6
+    severity: high
+    criticality: ALTA
+    requiresPrivilege: false
+    remediation: "Establece una longitud minima de contrasena >= 14 (net accounts /minpwlen:14 o por GPO/Directiva de seguridad local)."
+    ensControls: ["op.acc.5", "op.acc.6"]
+    syntaxConfidence: high
+
+  - id: WIN-ACC-02
+    category: USERS
+    os: windows
+    tier: deep
+    description: "Las contrasenas locales deben caducar (caducidad maxima acotada, no 'nunca')."
+    read: { type: netaccounts, key: maxPwAge }
+    comparator: le
+    expected: { good: "365" }
+    points: 3
+    severity: low
+    criticality: BAJA
+    requiresPrivilege: false
+    remediation: "Configura una caducidad maxima de contrasena (p.ej. net accounts /maxpwage:365). 'Nunca caduca' se considera inseguro."
+    ensControls: ["op.acc.5"]
+    syntaxConfidence: high
+
+  - id: WIN-ACC-03
+    category: USERS
+    os: windows
+    tier: core
+    description: "Debe existir bloqueo de cuenta tras varios intentos fallidos (umbral entre 1 y 5)."
+    read: { type: netaccounts, key: lockoutThreshold }
+    comparator: range
+    # 1-5 intentos = bueno (alineado con CIS); 6-10 = aceptable pero flojo (WARN); 0 = sin
+    # bloqueo o >10 = FAIL.
+    expected: { good: "[1,5]", medium: "[6,10]" }
+    points: 5
+    severity: medium
+    criticality: MEDIA
+    requiresPrivilege: false
+    remediation: "Configura un umbral de bloqueo de cuenta entre 1 y 5 intentos (net accounts /lockoutthreshold:5). Un valor 0 desactiva el bloqueo."
+    ensControls: ["op.acc.5", "op.exp.2"]
+    syntaxConfidence: high

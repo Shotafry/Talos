@@ -1,0 +1,48 @@
+checks:
+  - id: WIN-FW-01
+    category: FIREWALL
+    os: windows
+    tier: core
+    description: "El cortafuegos de Windows debe estar activo en el perfil de Dominio."
+    read: { type: cmdlet, cmd: ["(Get-NetFirewallProfile -Name Domain).Enabled"] }
+    comparator: eq
+    expected: { good: "true" }
+    points: 8
+    severity: high
+    criticality: ALTA
+    requiresPrivilege: false
+    remediation: "Activa el cortafuegos del perfil de Dominio: Set-NetFirewallProfile -Name Domain -Enabled True."
+    ensControls: ["mp.com.1", "op.exp.2"]
+    syntaxConfidence: high
+
+  - id: WIN-FW-02
+    category: FIREWALL
+    os: windows
+    tier: core
+    description: "El cortafuegos de Windows debe estar activo en el perfil Privado."
+    read: { type: cmdlet, cmd: ["(Get-NetFirewallProfile -Name Private).Enabled"] }
+    comparator: eq
+    expected: { good: "true" }
+    points: 8
+    severity: high
+    criticality: ALTA
+    requiresPrivilege: false
+    remediation: "Activa el cortafuegos del perfil Privado: Set-NetFirewallProfile -Name Private -Enabled True."
+    ensControls: ["mp.com.1", "op.exp.2"]
+    syntaxConfidence: high
+
+  - id: WIN-FW-03
+    category: FIREWALL
+    os: windows
+    tier: core
+    description: "El cortafuegos de Windows debe estar activo en el perfil Publico (redes no confiables)."
+    read: { type: cmdlet, cmd: ["(Get-NetFirewallProfile -Name Public).Enabled"] }
+    comparator: eq
+    expected: { good: "true" }
+    points: 10
+    severity: high
+    criticality: ALTA
+    requiresPrivilege: false
+    remediation: "Activa el cortafuegos del perfil Publico: Set-NetFirewallProfile -Name Public -Enabled True."
+    ensControls: ["mp.com.1", "op.exp.2"]
+    syntaxConfidence: high

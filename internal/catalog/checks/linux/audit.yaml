@@ -1,0 +1,35 @@
+checks:
+  - id: AUD-01
+    category: AUDIT
+    os: linux
+    tier: core
+    description: "El demonio auditd debe estar activo para registrar la actividad del sistema."
+    read: { type: systemd, unit: "auditd" }
+    comparator: eq
+    expected: { good: "active" }
+    points: 3
+    severity: medium
+    criticality: MEDIA
+    applicability:
+      anyOf:
+        - { service: "auditd" }
+    requiresPrivilege: false
+    remediation: "Instala y activa auditd: `systemctl enable --now auditd` y carga reglas en /etc/audit/rules.d/."
+    ensControls: ["op.exp.8", "op.mon.1"]
+    syntaxConfidence: high
+
+  - id: AUD-02
+    category: AUDIT
+    os: linux
+    tier: deep
+    description: "journald debe guardar los logs de forma persistente (sobreviven al reinicio)."
+    read: { type: stat, path: "/var/log/journal" }
+    comparator: exists
+    expected: { good: true }
+    points: 2
+    severity: low
+    criticality: BAJA
+    requiresPrivilege: false
+    remediation: "Activa el almacenamiento persistente: crea /var/log/journal y pon Storage=persistent en journald.conf."
+    ensControls: ["op.exp.8"]
+    syntaxConfidence: high

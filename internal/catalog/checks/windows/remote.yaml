@@ -1,0 +1,64 @@
+checks:
+  - id: WIN-RDP-01
+    category: RDP
+    os: windows
+    tier: core
+    description: "El Escritorio remoto, si esta habilitado, debe exigir autenticacion a nivel de red (NLA)."
+    read: { type: registry, path: 'HKLM\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp', name: 'UserAuthentication' }
+    comparator: eq
+    expected: { good: "1" }
+    points: 8
+    severity: high
+    criticality: ALTA
+    requiresPrivilege: false
+    remediation: "Exige NLA en RDP: UserAuthentication=1 (GPO 'Requerir autenticacion de usuario para conexiones remotas mediante NLA')."
+    ensControls: ["op.acc.5", "mp.com.2"]
+    syntaxConfidence: high
+
+  - id: WIN-RDP-02
+    category: RDP
+    os: windows
+    tier: deep
+    description: "El nivel de cifrado de RDP deberia ser alto."
+    read: { type: registry, path: 'HKLM\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp', name: 'MinEncryptionLevel' }
+    comparator: in
+    expected: { good: ["3", "4"], medium: ["2"] }
+    points: 3
+    severity: low
+    criticality: BAJA
+    requiresPrivilege: false
+    remediation: "Sube el nivel minimo de cifrado RDP a Alto (MinEncryptionLevel=3) o compatible con FIPS (4)."
+    ensControls: ["mp.com.2"]
+    syntaxConfidence: high
+
+  - id: WIN-SVC-01
+    category: SERVICES
+    os: windows
+    tier: core
+    description: "El servicio Registro remoto (RemoteRegistry) debe estar deshabilitado (superficie de ataque/recon)."
+    read: { type: cmdlet, cmd: ["(Get-Service RemoteRegistry).StartType"] }
+    comparator: eq
+    expected: { good: "Disabled" }
+    points: 4
+    severity: medium
+    criticality: MEDIA
+    requiresPrivilege: false
+    remediation: "Deshabilita el Registro remoto: Set-Service RemoteRegistry -StartupType Disabled."
+    ensControls: ["op.exp.2"]
+    syntaxConfidence: high
+
+  - id: WIN-SVC-02
+    category: SERVICES
+    os: windows
+    tier: deep
+    description: "WinRM no deberia estar a la escucha salvo que se administre el equipo de forma remota deliberada."
+    read: { type: cmdlet, cmd: ["(Get-Service WinRM).Status"] }
+    comparator: eq
+    expected: { good: "Stopped", medium: "Running" }
+    points: 2
+    severity: low
+    criticality: BAJA
+    requiresPrivilege: false
+    remediation: "Si no usas administracion remota por WinRM, detenlo y deshabilitalo. Si lo usas, restringelo por HTTPS y cortafuegos."
+    ensControls: ["op.exp.2"]
+    syntaxConfidence: high

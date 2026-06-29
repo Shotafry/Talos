@@ -1,0 +1,48 @@
+checks:
+  - id: USERS-01
+    category: USERS
+    os: linux
+    tier: core
+    description: "La cuenta root debe tener el acceso por contrasena bloqueado en /etc/shadow."
+    read: { type: shadow, user: "root" }
+    comparator: in
+    expected: { good: ["LOCKED", "NOLOGIN"] }
+    points: 4
+    severity: high
+    criticality: ALTA
+    requiresPrivilege: true
+    remediation: "Bloquea la contrasena de root con `passwd -l root` (administra con sudo)."
+    ensControls: ["op.acc.6"]
+    syntaxConfidence: high
+
+  - id: USERS-03
+    category: USERS
+    os: linux
+    tier: core
+    description: "Ninguna cuenta debe tener la contrasena vacia."
+    read: { type: shadow, user: "*" }
+    comparator: exists
+    expected: { good: false }
+    points: 5
+    severity: critical
+    criticality: CRITICA
+    requiresPrivilege: true
+    remediation: "Asigna contrasena o bloquea (`passwd -l <usuario>`) las cuentas con contrasena vacia."
+    ensControls: ["op.acc.6"]
+    syntaxConfidence: high
+
+  - id: USERS-05
+    category: USERS
+    os: linux
+    tier: core
+    description: "Solo la cuenta root debe tener UID 0 (no debe haber UID 0 duplicados)."
+    read: { type: passwd }
+    comparator: eq
+    expected: { good: "1" }
+    points: 4
+    severity: critical
+    criticality: CRITICA
+    requiresPrivilege: false
+    remediation: "Cambia el UID de cualquier cuenta distinta de root que tenga UID 0."
+    ensControls: ["op.acc.1", "op.acc.2"]
+    syntaxConfidence: high

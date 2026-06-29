@@ -1,0 +1,48 @@
+checks:
+  - id: FS-01
+    category: FS
+    os: linux
+    tier: deep
+    description: "/tmp debe montarse con nodev (no permitir dispositivos en /tmp)."
+    read: { type: exec, cmd: ["findmnt", "-no", "OPTIONS", "/tmp"] }
+    comparator: regex
+    expected: { good: "nodev" }
+    points: 1
+    severity: low
+    criticality: BAJA
+    requiresPrivilege: false
+    remediation: "Monta /tmp como particion separada con opciones nodev,nosuid,noexec."
+    ensControls: ["op.exp.2"]
+    syntaxConfidence: review
+
+  - id: FS-02
+    category: FS
+    os: linux
+    tier: deep
+    description: "/tmp debe montarse con nosuid (no respetar bits SUID en /tmp)."
+    read: { type: exec, cmd: ["findmnt", "-no", "OPTIONS", "/tmp"] }
+    comparator: regex
+    expected: { good: "nosuid" }
+    points: 1
+    severity: low
+    criticality: BAJA
+    requiresPrivilege: false
+    remediation: "Anade nosuid a las opciones de montaje de /tmp."
+    ensControls: ["op.exp.2", "op.acc.2"]
+    syntaxConfidence: review
+
+  - id: FS-03
+    category: FS
+    os: linux
+    tier: deep
+    description: "/tmp debe montarse con noexec (no ejecutar binarios desde /tmp)."
+    read: { type: exec, cmd: ["findmnt", "-no", "OPTIONS", "/tmp"] }
+    comparator: regex
+    expected: { good: "noexec" }
+    points: 1
+    severity: low
+    criticality: BAJA
+    requiresPrivilege: false
+    remediation: "Anade noexec a las opciones de montaje de /tmp."
+    ensControls: ["op.exp.2"]
+    syntaxConfidence: review

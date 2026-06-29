@@ -1,0 +1,57 @@
+checks:
+  - id: SVC-01
+    category: SERVICES
+    os: linux
+    tier: deep
+    description: "avahi-daemon (descubrimiento mDNS) no deberia ejecutarse en un servidor."
+    read: { type: systemd, unit: "avahi-daemon" }
+    comparator: eq
+    expected: { good: "inactive" }
+    points: 1
+    severity: low
+    criticality: BAJA
+    applicability:
+      anyOf:
+        - { service: "avahi-daemon" }
+    requiresPrivilege: false
+    remediation: "Desactiva avahi: `systemctl disable --now avahi-daemon`."
+    ensControls: ["op.exp.2"]
+    syntaxConfidence: high
+
+  - id: SVC-02
+    category: SERVICES
+    os: linux
+    tier: deep
+    description: "El servicio de impresion CUPS no deberia ejecutarse en un servidor."
+    read: { type: systemd, unit: "cups" }
+    comparator: eq
+    expected: { good: "inactive" }
+    points: 1
+    severity: low
+    criticality: BAJA
+    applicability:
+      anyOf:
+        - { service: "cups" }
+    requiresPrivilege: false
+    remediation: "Desactiva CUPS: `systemctl disable --now cups`."
+    ensControls: ["op.exp.2"]
+    syntaxConfidence: high
+
+  - id: SVC-03
+    category: SERVICES
+    os: linux
+    tier: deep
+    description: "rpcbind expone servicios RPC; no deberia ejecutarse salvo que se use NFS."
+    read: { type: systemd, unit: "rpcbind" }
+    comparator: eq
+    expected: { good: "inactive" }
+    points: 1
+    severity: low
+    criticality: BAJA
+    applicability:
+      anyOf:
+        - { service: "rpcbind" }
+    requiresPrivilege: false
+    remediation: "Desactiva rpcbind si no usas NFS: `systemctl disable --now rpcbind`."
+    ensControls: ["op.exp.2", "mp.com.1"]
+    syntaxConfidence: high
