@@ -3,7 +3,7 @@ checks:
     category: DEFENDER
     os: windows
     tier: core
-    description: "La protección en tiempo real de Microsoft Defender debe estar activa."
+    description: "La protección en tiempo real es la primera linea de defensa: analiza archivos y procesos en el momento en que se abren o ejecutan. Si esta apagada, el malware puede instalarse sin que nada lo intercepte."
     read: { type: cmdlet, cmd: ["(Get-MpComputerStatus).RealTimeProtectionEnabled"] }
     comparator: eq
     expected: { good: "true" }
@@ -11,7 +11,7 @@ checks:
     severity: high
     criticality: ALTA
     requiresPrivilege: false
-    remediation: "Activa la protección en tiempo real de Defender (o verifica que otro antivirus la cubre). Set-MpPreference -DisableRealtimeMonitoring $false."
+    remediation: "Reactiva la protección en tiempo real con `Set-MpPreference -DisableRealtimeMonitoring $false`, o confirma que otro antivirus de confianza esta asumiendo esa funcion (en ese caso Defender se desactiva solo)."
     ensControls: ["op.exp.6", "op.exp.3"]
     syntaxConfidence: high
 
@@ -19,7 +19,7 @@ checks:
     category: DEFENDER
     os: windows
     tier: core
-    description: "La protección contra manipulaciones (Tamper Protection) debe estar activa para que el malware no apague Defender."
+    description: "Muchos ataques empiezan por desactivar el antivirus. La protección contra manipulaciones (Tamper Protection) blinda los ajustes de Defender para que ni el malware ni cambios no autorizados puedan apagarlo."
     read: { type: cmdlet, cmd: ["(Get-MpComputerStatus).IsTamperProtected"] }
     comparator: eq
     expected: { good: "true" }
@@ -27,7 +27,7 @@ checks:
     severity: medium
     criticality: MEDIA
     requiresPrivilege: false
-    remediation: "Activa la protección contra manipulaciones desde Seguridad de Windows > Proteccion antivirus."
+    remediation: "Activa la protección contra manipulaciones desde Seguridad de Windows > Proteccion antivirus y contra amenazas > Administrar la configuracion. En equipos gestionados conviene fijarla por Intune o GPO para que no se pueda desactivar localmente."
     ensControls: ["op.exp.6", "op.exp.2"]
     syntaxConfidence: high
 
@@ -35,7 +35,7 @@ checks:
     category: DEFENDER
     os: windows
     tier: core
-    description: "La protección de red (Network Protection) debería bloquear conexiones a dominios maliciosos."
+    description: "La protección de red impide que el equipo conecte con dominios e IP de reputacion peligrosa, cortando descargas de malware y comunicaciones con servidores de control. Es una barrera util incluso cuando el navegador no la ofrece."
     read: { type: cmdlet, cmd: ["(Get-MpPreference).EnableNetworkProtection"] }
     comparator: eq
     expected: { good: "1", medium: "2" }
@@ -43,7 +43,7 @@ checks:
     severity: medium
     criticality: MEDIA
     requiresPrivilege: false
-    remediation: "Activa la protección de red en modo bloqueo: Set-MpPreference -EnableNetworkProtection Enabled (1=bloqueo, 2=auditoria)."
+    remediation: "Activa la protección de red en modo bloqueo con `Set-MpPreference -EnableNetworkProtection Enabled` (1 = bloqueo). El modo auditoria (2) solo registra sin bloquear, util para probar antes de aplicarlo en serio."
     ensControls: ["op.exp.6", "mp.com.1"]
     syntaxConfidence: high
 
@@ -51,7 +51,7 @@ checks:
     category: DEFENDER
     os: windows
     tier: deep
-    description: "El acceso controlado a carpetas (anti-ransomware) debería estar activo."
+    description: "El acceso controlado a carpetas protege las carpetas de documentos frente al ransomware: solo las aplicaciones de confianza pueden modificar su contenido, así que un cifrador no autorizado se queda fuera."
     read: { type: cmdlet, cmd: ["(Get-MpPreference).EnableControlledFolderAccess"] }
     comparator: eq
     expected: { good: "1", medium: "2" }
@@ -59,7 +59,7 @@ checks:
     severity: low
     criticality: BAJA
     requiresPrivilege: false
-    remediation: "Activa el acceso controlado a carpetas: Set-MpPreference -EnableControlledFolderAccess Enabled."
+    remediation: "Activa el acceso controlado a carpetas con `Set-MpPreference -EnableControlledFolderAccess Enabled`. Como puede bloquear aplicaciones legitimas, conviene empezar en modo auditoria y añadir las apps de confianza antes de pasar a bloqueo."
     ensControls: ["op.exp.6"]
     syntaxConfidence: high
 
@@ -67,7 +67,7 @@ checks:
     category: DEFENDER
     os: windows
     tier: deep
-    description: "El envio de muestras a la nube (MAPS/cloud) debería estar configurado para mejorar la detección."
+    description: "Con el envio de muestras a la nube activo, Defender consulta la inteligencia de Microsoft y comparte archivos sospechosos, lo que le permite detectar amenazas nuevas mucho antes de que existan firmas locales."
     read: { type: cmdlet, cmd: ["(Get-MpPreference).MAPSReporting"] }
     comparator: eq
     expected: { good: "2", medium: "1" }
@@ -75,7 +75,7 @@ checks:
     severity: low
     criticality: BAJA
     requiresPrivilege: false
-    remediation: "Configura MAPS avanzado: Set-MpPreference -MAPSReporting Advanced (2)."
+    remediation: "Configura el envio avanzado con `Set-MpPreference -MAPSReporting Advanced` (valor 2). El nivel basico (1) es aceptable, pero el avanzado aprovecha mejor la protección en la nube."
     ensControls: ["op.exp.6"]
     syntaxConfidence: high
 
@@ -83,7 +83,7 @@ checks:
     category: DEFENDER
     os: windows
     tier: core
-    description: "Deberia haber reglas de reducción de superficie de ataque (ASR) configuradas."
+    description: "Las reglas de reducción de superficie de ataque (ASR) bloquean tecnicas que el malware usa una y otra vez, como las macros de Office que descargan código o el robo de credenciales desde LSASS. Sin ninguna regla activa, esas vias quedan abiertas."
     read: { type: cmdlet, cmd: ["@((Get-MpPreference).AttackSurfaceReductionRules_Ids | Where-Object {$_}).Count"] }
     comparator: ge
     expected: { good: "1" }
@@ -91,6 +91,6 @@ checks:
     severity: medium
     criticality: MEDIA
     requiresPrivilege: false
-    remediation: "Configura reglas ASR (bloqueo de macros de Office, robo de credenciales LSASS, etc.) con Set-MpPreference -AttackSurfaceReductionRules_Ids/-Actions."
+    remediation: "Define reglas ASR (bloqueo de macros de Office que ejecutan código, robo de credenciales desde LSASS, etc.) con `Set-MpPreference -AttackSurfaceReductionRules_Ids` y `-AttackSurfaceReductionRules_Actions`. Empieza en modo auditoria para no romper aplicaciones legitimas y pasa a bloqueo cuando lo valides."
     ensControls: ["op.exp.6", "op.exp.2"]
     syntaxConfidence: high

@@ -3,7 +3,7 @@ checks:
     category: UPDATES
     os: linux
     tier: core
-    description: "No deben quedar actualizaciones de seguridad pendientes de instalar."
+    description: "Comprueba que no queden parches de seguridad sin instalar. Cada actualización pendiente suele tapar una vulnerabilidad conocida, y dejarlas acumular es una de las vías de intrusión más comunes."
     read: { type: pkgmgr, op: "security", cmd: ["apt", "list", "--upgradable"] }
     comparator: le
     expected: { good: "0", medium: "5" }
@@ -14,7 +14,7 @@ checks:
       anyOf:
         - { package: apt }
     requiresPrivilege: false
-    remediation: "Aplica las actualizaciones de seguridad: `apt-get update && apt-get upgrade`."
+    remediation: "Actualiza el índice de paquetes y aplica los parches con `apt-get update && apt-get upgrade`; valora habilitar las actualizaciones de seguridad automáticas (unattended-upgrades)."
     ensControls: ["op.exp.4"]
     syntaxConfidence: review
 
@@ -22,7 +22,7 @@ checks:
     category: UPDATES
     os: linux
     tier: deep
-    description: "No debe haber un reinicio pendiente tras actualizaciones (parches del kernel sin aplicar)."
+    description: "Comprueba si el sistema marcó un reinicio pendiente (fichero /run/reboot-required). Algunos parches, sobre todo los del kernel, no surten efecto hasta reiniciar, por lo que el equipo sigue vulnerable mientras tanto."
     read: { type: stat, path: "/run/reboot-required" }
     comparator: exists
     expected: { good: false }
@@ -30,6 +30,6 @@ checks:
     severity: medium
     criticality: MEDIA
     requiresPrivilege: false
-    remediation: "Reinicia el sistema para aplicar los parches pendientes en una ventana de mantenimiento."
+    remediation: "Programa un reinicio en una ventana de mantenimiento para aplicar los parches pendientes; si necesitas evitar el reinicio, valora el parcheo del kernel en caliente (livepatch/kpatch)."
     ensControls: ["op.exp.4"]
     syntaxConfidence: high

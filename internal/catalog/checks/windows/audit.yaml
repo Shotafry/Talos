@@ -3,7 +3,7 @@ checks:
     category: AUDIT
     os: windows
     tier: core
-    description: "El registro de bloques de script de PowerShell debe estar activo (huella forense de scripts maliciosos)."
+    description: "Buena parte de los ataques modernos se apoyan en PowerShell. Registrar los bloques de script deja en el visor de eventos el código que se ejecuto, una huella forense clave para investigar scripts maliciosos."
     read: { type: registry, path: 'HKLM\SOFTWARE\Policies\Microsoft\Windows\PowerShell\ScriptBlockLogging', name: 'EnableScriptBlockLogging' }
     comparator: eq
     expected: { good: "1" }
@@ -11,7 +11,7 @@ checks:
     severity: medium
     criticality: MEDIA
     requiresPrivilege: false
-    remediation: "Activa el registro de bloques de script por GPO (Plantillas administrativas > Windows PowerShell) o EnableScriptBlockLogging=1."
+    remediation: 'Activa el registro de bloques de script por GPO (Plantillas administrativas > Componentes de Windows > Windows PowerShell > Activar el registro de bloques de script) o pon EnableScriptBlockLogging=1 en HKLM\SOFTWARE\Policies\Microsoft\Windows\PowerShell\ScriptBlockLogging.'
     ensControls: ["op.exp.8"]
     syntaxConfidence: high
 
@@ -19,7 +19,7 @@ checks:
     category: AUDIT
     os: windows
     tier: deep
-    description: "Los eventos de creacion de procesos deben incluir la linea de comandos (caza de ejecución sospechosa)."
+    description: "Saber que un proceso arranco no basta; lo revelador es con que argumentos lo hizo. Incluir la linea de comandos completa en los eventos 4688 permite cazar ejecuciones sospechosas y reconstruir lo que hizo un atacante."
     read: { type: registry, path: 'HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System\Audit', name: 'ProcessCreationIncludeCmdLine_Enabled' }
     comparator: eq
     expected: { good: "1" }
@@ -27,6 +27,6 @@ checks:
     severity: low
     criticality: BAJA
     requiresPrivilege: false
-    remediation: "Activa la inclusion de la linea de comandos en los eventos 4688 (GPO 'Incluir linea de comandos en eventos de creacion de procesos') o ProcessCreationIncludeCmdLine_Enabled=1."
+    remediation: 'Activa por GPO la directiva "Incluir linea de comandos en eventos de creacion de procesos" o pon ProcessCreationIncludeCmdLine_Enabled=1 en HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System\Audit. Recuerda que también debe estar auditada la creacion de procesos para generar el evento 4688.'
     ensControls: ["op.exp.8"]
     syntaxConfidence: high

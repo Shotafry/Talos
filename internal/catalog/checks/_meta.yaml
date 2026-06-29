@@ -1,5 +1,5 @@
 catalog:
-  version: "2026.06.2"          # CalVer AAAA.MM.parche - una version por release de catalogo
+  version: "2026.06.3"          # CalVer AAAA.MM.parche - una version por release de catalogo
   schemaVersion: 1              # version del ESQUEMA de ficha; el motor valida que lo soporta
   generatedAt: "2026-06-29"
   compat:

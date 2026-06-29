@@ -59,7 +59,7 @@ Todo ocurre en la máquina. Nada sale a la red.
 
 ## El catálogo: qué comprueba
 
-**106 comprobaciones** (74 Linux + 32 Windows), escritas como **datos** (fichas
+**141 comprobaciones** (105 Linux + 36 Windows), escritas como **datos** (fichas
 YAML): cada una con su severidad, peso, criticidad, controles ENS y cómo remediarla.
 
 - **Linux** - 12 categorías: SSH, KERNEL, FIREWALL, USERS, PORTS, UPDATES, MAC

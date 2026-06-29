@@ -3,7 +3,7 @@ checks:
     category: RDP
     os: windows
     tier: core
-    description: "El Escritorio remoto, si está habilitado, debe exigir autenticación a nivel de red (NLA)."
+    description: "Cuando el Escritorio remoto está habilitado, NLA obliga al usuario a autenticarse antes de que se cree la sesión, lo que protege el servidor frente a ataques previos al inicio de sesión y reduce la exposición a fuerza bruta. Si RDP está activo, debe exigir autenticación a nivel de red."
     read: { type: registry, path: 'HKLM\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp', name: 'UserAuthentication' }
     comparator: eq
     expected: { good: "1" }
@@ -11,7 +11,7 @@ checks:
     severity: high
     criticality: ALTA
     requiresPrivilege: false
-    remediation: "Exige NLA en RDP: UserAuthentication=1 (GPO 'Requerir autenticación de usuario para conexiones remotas mediante NLA')."
+    remediation: 'Exige NLA en RDP poniendo UserAuthentication=1 en HKLM\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp, o por GPO con "Requerir autenticación de usuario para conexiones remotas mediante NLA".'
     ensControls: ["op.acc.5", "mp.com.2"]
     syntaxConfidence: high
 
@@ -19,7 +19,7 @@ checks:
     category: RDP
     os: windows
     tier: deep
-    description: "El nivel de cifrado de RDP debería ser alto."
+    description: "El nivel de cifrado de RDP determina la robustez con la que se protege el tráfico de la sesión remota; un nivel bajo permite cifrados débiles y deja la sesión expuesta a interceptación. Debería estar configurado como alto."
     read: { type: registry, path: 'HKLM\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp', name: 'MinEncryptionLevel' }
     comparator: in
     expected: { good: ["3", "4"], medium: ["2"] }
@@ -27,7 +27,7 @@ checks:
     severity: low
     criticality: BAJA
     requiresPrivilege: false
-    remediation: "Sube el nivel mínimo de cifrado RDP a Alto (MinEncryptionLevel=3) o compatible con FIPS (4)."
+    remediation: 'Sube el nivel mínimo de cifrado de RDP a Alto poniendo MinEncryptionLevel=3, o a compatible con FIPS con MinEncryptionLevel=4. El valor 2 (Compatible con clientes) solo se acepta como tolerable.'
     ensControls: ["mp.com.2"]
     syntaxConfidence: high
 
@@ -35,7 +35,7 @@ checks:
     category: SERVICES
     os: windows
     tier: core
-    description: "El servicio Registro remoto (RemoteRegistry) debe estar deshabilitado (superficie de ataque/recon)."
+    description: "El servicio Registro remoto permite leer y modificar el registro del equipo desde la red, lo que da a un atacante una vía de reconocimiento y manipulación sin necesidad de iniciar sesión local. Salvo necesidad expresa, debe estar deshabilitado."
     read: { type: cmdlet, cmd: ["(Get-Service RemoteRegistry).StartType"] }
     comparator: eq
     expected: { good: "Disabled" }
@@ -43,7 +43,7 @@ checks:
     severity: medium
     criticality: MEDIA
     requiresPrivilege: false
-    remediation: "Deshabilita el Registro remoto: Set-Service RemoteRegistry -StartupType Disabled."
+    remediation: "Deshabilita el servicio Registro remoto con Set-Service RemoteRegistry -StartupType Disabled y, si está corriendo, detenlo con Stop-Service RemoteRegistry. Solo habilítalo de forma puntual si una herramienta de administración lo requiere."
     ensControls: ["op.exp.2"]
     syntaxConfidence: high
 
@@ -51,7 +51,7 @@ checks:
     category: SERVICES
     os: windows
     tier: deep
-    description: "WinRM no debería estar a la escucha salvo que se administre el equipo de forma remota deliberada."
+    description: "WinRM habilita la administración remota por PowerShell y, si está a la escucha sin necesidad, amplía la superficie de ataque y puede facilitar el movimiento lateral. No debería estar en ejecución salvo que se administre el equipo de forma remota de manera deliberada."
     read: { type: cmdlet, cmd: ["(Get-Service WinRM).Status"] }
     comparator: eq
     expected: { good: "Stopped", medium: "Running" }
@@ -59,6 +59,6 @@ checks:
     severity: low
     criticality: BAJA
     requiresPrivilege: false
-    remediation: "Si no usas administración remota por WinRM, detenlo y deshabilitalo. Si lo usas, restringelo por HTTPS y cortafuegos."
+    remediation: "Si no usas administración remota por WinRM, detén el servicio y deshabilítalo (Stop-Service WinRM; Set-Service WinRM -StartupType Disabled). Si sí lo necesitas, restríngelo a transporte HTTPS y limita por cortafuegos los orígenes que pueden conectar."
     ensControls: ["op.exp.2"]
     syntaxConfidence: high

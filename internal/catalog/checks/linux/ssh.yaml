@@ -3,7 +3,7 @@ checks:
     category: SSH
     os: linux
     tier: core
-    description: "El demonio SSH debe estar activo si es el medio de administración."
+    description: "Si SSH es tu vía de administración del servidor, el demonio sshd tiene que estar activo; si está caído, te quedas sin acceso remoto en el momento menos oportuno."
     read: { type: systemd, unit: "sshd" }
     comparator: eq
     expected: { good: "active" }
@@ -15,7 +15,7 @@ checks:
         - { service: "sshd" }
         - { service: "ssh" }
     requiresPrivilege: false
-    remediation: "Si SSH es necesario: `systemctl enable --now ssh`. Si no, desinstala openssh-server."
+    remediation: "Si necesitas SSH, actívalo y arráncalo con `systemctl enable --now ssh`. Si esta máquina no se administra por SSH, lo más limpio es desinstalar openssh-server para no dejar el puerto expuesto."
     ensControls: ["op.exp.2"]
     syntaxConfidence: high
 
@@ -23,7 +23,7 @@ checks:
     category: SSH
     os: linux
     tier: core
-    description: "El acceso SSH directo como root debe estar prohibido; obliga a entrar con un usuario nominal y escalar."
+    description: "Entrar por SSH directamente como root mezcla la cuenta más poderosa del sistema con el acceso remoto y borra todo rastro de quién hizo qué. Obligar a entrar con un usuario nominal y luego escalar deja trazabilidad y reduce la superficie de ataque."
     read: { type: sshd_t, key: permitrootlogin }
     comparator: eq
     expected:
@@ -38,7 +38,7 @@ checks:
         - { service: ssh }
         - { file: "/etc/ssh/sshd_config" }
     requiresPrivilege: true
-    remediation: "En /etc/ssh/sshd_config establece PermitRootLogin no y recarga con systemctl reload ssh. Asegura un usuario con sudo antes de cerrar la sesión."
+    remediation: "En /etc/ssh/sshd_config pon `PermitRootLogin no` y recarga con `systemctl reload ssh`. IMPORTANTE: comprueba que tienes un usuario con sudo y acceso funcional antes de cerrar la sesión, o te puedes quedar fuera."
     ensControls: ["op.acc.6", "op.exp.2"]
     syntaxConfidence: high
 
@@ -46,7 +46,7 @@ checks:
     category: SSH
     os: linux
     tier: core
-    description: "La autenticación por contraseña debe estar desactivada (solo clave pública) para frenar la fuerza bruta."
+    description: "Con la autenticación por contraseña activa, cualquiera puede intentar adivinarla por fuerza bruta contra el puerto SSH. Exigir solo clave pública elimina de raíz ese vector."
     read: { type: sshd_t, key: passwordauthentication }
     comparator: eq
     expected: { good: "no" }
@@ -59,7 +59,7 @@ checks:
         - { service: ssh }
         - { file: "/etc/ssh/sshd_config" }
     requiresPrivilege: true
-    remediation: "Pon `PasswordAuthentication no` (y `KbdInteractiveAuthentication no`); instala tu clave antes de recargar."
+    remediation: "En /etc/ssh/sshd_config pon `PasswordAuthentication no` y `KbdInteractiveAuthentication no`, y recarga con `systemctl reload ssh`. IMPORTANTE: instala antes tu clave pública o perderás el acceso."
     ensControls: ["op.acc.6", "mp.com.3"]
     syntaxConfidence: high
 
@@ -67,7 +67,7 @@ checks:
     category: SSH
     os: linux
     tier: deep
-    description: "La autenticación por clave pública debe estar habilitada."
+    description: "La clave pública es el método de autenticación recomendado en SSH: si está deshabilitada, no podrás prescindir de las contraseñas. Debe estar activa para poder cerrar el acceso por contraseña con seguridad."
     read: { type: sshd_t, key: pubkeyauthentication }
     comparator: eq
     expected: { good: "yes" }
@@ -80,7 +80,7 @@ checks:
         - { service: ssh }
         - { file: "/etc/ssh/sshd_config" }
     requiresPrivilege: true
-    remediation: "Pon `PubkeyAuthentication yes` en sshd_config."
+    remediation: "En /etc/ssh/sshd_config pon `PubkeyAuthentication yes` y recarga con `systemctl reload ssh`."
     ensControls: ["op.acc.6", "op.exp.2"]
     syntaxConfidence: high
 
@@ -88,7 +88,7 @@ checks:
     category: SSH
     os: linux
     tier: core
-    description: "No se deben permitir contraseñas vacías en SSH."
+    description: "Permitir contraseñas vacías deja abierta la puerta a cualquier cuenta sin contraseña: equivale a un acceso sin autenticar. Es un riesgo crítico y nunca debe estar activado."
     read: { type: sshd_t, key: permitemptypasswords }
     comparator: eq
     expected: { good: "no" }
@@ -101,7 +101,7 @@ checks:
         - { service: ssh }
         - { file: "/etc/ssh/sshd_config" }
     requiresPrivilege: true
-    remediation: "Pon `PermitEmptyPasswords no` en sshd_config."
+    remediation: "En /etc/ssh/sshd_config pon `PermitEmptyPasswords no` y recarga con `systemctl reload ssh`. Aprovecha para revisar que ninguna cuenta del sistema tenga contraseña vacía."
     ensControls: ["op.acc.6", "op.exp.2"]
     syntaxConfidence: high
 
@@ -109,7 +109,7 @@ checks:
     category: SSH
     os: linux
     tier: core
-    description: "Limita los intentos de autenticación por conexión (anti fuerza bruta)."
+    description: "Cada conexión SSH permite varios intentos de autenticación antes de cortarse; cuantos más permitas, más fácil es probar contraseñas en bucle. Acotar MaxAuthTries frena los ataques de fuerza bruta."
     read: { type: sshd_t, key: maxauthtries }
     comparator: le
     expected: { good: "3", medium: "6" }
@@ -122,7 +122,7 @@ checks:
         - { service: ssh }
         - { file: "/etc/ssh/sshd_config" }
     requiresPrivilege: true
-    remediation: "Pon `MaxAuthTries 3` en sshd_config y recarga el servicio."
+    remediation: "En /etc/ssh/sshd_config pon `MaxAuthTries 3` y recarga con `systemctl reload ssh`."
     ensControls: ["op.exp.2"]
     syntaxConfidence: high
 
@@ -130,7 +130,7 @@ checks:
     category: SSH
     os: linux
     tier: deep
-    description: "Desactiva el reenvío X11 salvo necesidad grafica."
+    description: "El reenvío X11 tuneliza aplicaciones gráficas a través de SSH, pero amplía la superficie de ataque y casi nunca hace falta en un servidor. Conviene desactivarlo salvo que tengas una necesidad gráfica real."
     read: { type: sshd_t, key: x11forwarding }
     comparator: eq
     expected: { good: "no" }
@@ -143,7 +143,7 @@ checks:
         - { service: ssh }
         - { file: "/etc/ssh/sshd_config" }
     requiresPrivilege: true
-    remediation: "Pon `X11Forwarding no` en sshd_config."
+    remediation: "En /etc/ssh/sshd_config pon `X11Forwarding no` y recarga con `systemctl reload ssh`."
     ensControls: ["op.exp.2"]
     syntaxConfidence: high
 
@@ -151,7 +151,7 @@ checks:
     category: SSH
     os: linux
     tier: deep
-    description: "Tiempo máximo de autenticación acotado (limita conexiones colgadas sin autenticar)."
+    description: "LoginGraceTime es el plazo que SSH da para completar la autenticación antes de cortar la conexión. Si es muy alto o ilimitado, las conexiones a medio autenticar se acumulan y abren la puerta a ataques de agotamiento de recursos."
     read: { type: sshd_t, key: logingracetime }
     comparator: le
     expected: { good: "60", medium: "120" }
@@ -164,7 +164,7 @@ checks:
         - { service: ssh }
         - { file: "/etc/ssh/sshd_config" }
     requiresPrivilege: true
-    remediation: "Pon `LoginGraceTime 60` en sshd_config (evita 0, que es ilimitado)."
+    remediation: "En /etc/ssh/sshd_config pon `LoginGraceTime 60` y recarga con `systemctl reload ssh`. Evita el valor 0, que significa sin límite de tiempo."
     ensControls: ["op.exp.2"]
     syntaxConfidence: high
 
@@ -172,7 +172,7 @@ checks:
     category: SSH
     os: linux
     tier: deep
-    description: "Los cifrados (Ciphers) no deben incluir algoritmos débiles (CBC, arcfour, 3DES)."
+    description: "Los cifrados que negocia SSH protegen la confidencialidad de la sesión; algoritmos antiguos como CBC, arcfour o 3DES tienen debilidades conocidas. Mantenerlos disponibles permite degradar la conexión a un cifrado vulnerable."
     read: { type: sshd_t, key: ciphers }
     comparator: nregex
     expected: { good: "(cbc|arcfour|3des|blowfish|cast128)" }
@@ -185,7 +185,7 @@ checks:
         - { service: ssh }
         - { file: "/etc/ssh/sshd_config" }
     requiresPrivilege: true
-    remediation: "Restringe `Ciphers` a algoritmos modernos (chacha20-poly1305, aes-gcm, aes-ctr) en sshd_config."
+    remediation: "En /etc/ssh/sshd_config restringe `Ciphers` a algoritmos modernos (chacha20-poly1305, aes-gcm, aes-ctr) y recarga con `systemctl reload ssh`."
     ensControls: ["mp.com.2"]
     syntaxConfidence: high
 
@@ -193,7 +193,7 @@ checks:
     category: SSH
     os: linux
     tier: deep
-    description: "Los MAC no deben incluir algoritmos débiles (MD5, SHA1 truncado)."
+    description: "Los MAC garantizan que nadie ha manipulado los datos de la sesión SSH; los basados en MD5 o SHA1 truncado ya no se consideran seguros. Dejarlos habilitados permite a un atacante forzar una negociación con integridad débil."
     read: { type: sshd_t, key: macs }
     comparator: nregex
     expected: { good: "(hmac-md5|hmac-sha1-96)" }
@@ -206,7 +206,7 @@ checks:
         - { service: ssh }
         - { file: "/etc/ssh/sshd_config" }
     requiresPrivilege: true
-    remediation: "Restringe `MACs` a algoritmos -etm modernos (hmac-sha2-256/512-etm, umac-128-etm)."
+    remediation: "En /etc/ssh/sshd_config restringe `MACs` a algoritmos -etm modernos (hmac-sha2-256/512-etm, umac-128-etm) y recarga con `systemctl reload ssh`."
     ensControls: ["mp.com.2"]
     syntaxConfidence: high
 
@@ -214,7 +214,7 @@ checks:
     category: SSH
     os: linux
     tier: deep
-    description: "Los algoritmos de intercambio de claves (KEX) no deben incluir SHA1 ni grupos DH débiles."
+    description: "El intercambio de claves (KEX) es donde cliente y servidor acuerdan el secreto de la sesión; SHA1 y los grupos Diffie-Hellman pequeños son atacables hoy. Si siguen disponibles, la conexión puede negociarse con un intercambio débil."
     read: { type: sshd_t, key: kexalgorithms }
     comparator: nregex
     expected: { good: "(group1-sha1|group-exchange-sha1|diffie-hellman-group14-sha1|gss-)" }
@@ -227,7 +227,7 @@ checks:
         - { service: ssh }
         - { file: "/etc/ssh/sshd_config" }
     requiresPrivilege: true
-    remediation: "Restringe `KexAlgorithms` a curve25519-sha256 y diffie-hellman-group16/18-sha512."
+    remediation: "En /etc/ssh/sshd_config restringe `KexAlgorithms` a curve25519-sha256 y diffie-hellman-group16/18-sha512, y recarga con `systemctl reload ssh`."
     ensControls: ["mp.com.2"]
     syntaxConfidence: review
 
@@ -235,7 +235,7 @@ checks:
     category: SSH
     os: linux
     tier: deep
-    description: "El nivel de registro de sshd debe ser informativo (huella forense de accesos)."
+    description: "Sin un registro suficientemente detallado, sshd no deja huella de quién entra ni con qué clave, y una investigación forense se queda a ciegas. Un nivel informativo o verboso conserva la traza de accesos."
     read: { type: sshd_t, key: loglevel }
     comparator: in
     expected: { good: ["INFO", "VERBOSE"] }
@@ -248,7 +248,7 @@ checks:
         - { service: ssh }
         - { file: "/etc/ssh/sshd_config" }
     requiresPrivilege: true
-    remediation: "Pon `LogLevel VERBOSE` en sshd_config (registra la huella de la clave usada)."
+    remediation: "En /etc/ssh/sshd_config pon `LogLevel VERBOSE` y recarga con `systemctl reload ssh`. VERBOSE registra además la huella de la clave usada en cada acceso, muy útil para auditoría."
     ensControls: ["op.exp.8"]
     syntaxConfidence: review
 
@@ -256,7 +256,7 @@ checks:
     category: SSH
     os: linux
     tier: deep
-    description: "SSH debe integrarse con PAM (políticas de bloqueo, limites, MFA)."
+    description: "PAM es lo que permite a SSH aplicar las políticas del sistema: bloqueo de cuentas tras intentos fallidos, límites de recursos y segundo factor. Sin UsePAM activo, todas esas defensas se quedan fuera del flujo de login por SSH."
     read: { type: sshd_t, key: usepam }
     comparator: eq
     expected: { good: "yes" }
@@ -269,6 +269,111 @@ checks:
         - { service: ssh }
         - { file: "/etc/ssh/sshd_config" }
     requiresPrivilege: true
-    remediation: "Pon `UsePAM yes` en sshd_config."
+    remediation: "En /etc/ssh/sshd_config pon `UsePAM yes` y recarga con `systemctl reload ssh`."
     ensControls: ["op.acc.6", "op.exp.2"]
+    syntaxConfidence: high
+
+  - id: SSH-06
+    category: SSH
+    os: linux
+    tier: deep
+    description: "La autenticación basada en host confía en la máquina de origen en lugar de en el usuario, una herencia de los antiguos servicios r* que es fácil de suplantar. No aporta nada hoy y debe estar desactivada."
+    read: { type: sshd_t, key: hostbasedauthentication }
+    comparator: eq
+    expected: { good: "no" }
+    points: 2
+    severity: medium
+    criticality: MEDIA
+    applicability:
+      anyOf:
+        - { service: sshd }
+        - { service: ssh }
+        - { file: "/etc/ssh/sshd_config" }
+    requiresPrivilege: true
+    remediation: "En /etc/ssh/sshd_config pon `HostbasedAuthentication no` y recarga con `systemctl reload ssh`."
+    ensControls: ["op.acc.6", "op.exp.2"]
+    syntaxConfidence: high
+
+  - id: SSH-09
+    category: SSH
+    os: linux
+    tier: deep
+    description: "Los ficheros .rhosts permiten que un usuario declare por su cuenta en qué máquinas confía para entrar sin contraseña. Ignorarlos evita esas confianzas implícitas que un atacante podría aprovechar para moverse de un equipo a otro."
+    read: { type: sshd_t, key: ignorerhosts }
+    comparator: eq
+    expected: { good: "yes" }
+    points: 2
+    severity: medium
+    criticality: MEDIA
+    applicability:
+      anyOf:
+        - { service: sshd }
+        - { service: ssh }
+        - { file: "/etc/ssh/sshd_config" }
+    requiresPrivilege: true
+    remediation: "En /etc/ssh/sshd_config pon `IgnoreRhosts yes` y recarga con `systemctl reload ssh`."
+    ensControls: ["op.acc.6", "op.exp.2"]
+    syntaxConfidence: high
+
+  - id: SSH-10
+    category: SSH
+    os: linux
+    tier: deep
+    description: "El reenvío de puertos TCP permite tunelizar tráfico a través de SSH; si no lo necesitas, un usuario o un atacante con acceso puede usar el servidor como trampolín hacia la red interna. Desactivarlo cierra ese pivote."
+    read: { type: sshd_t, key: allowtcpforwarding }
+    comparator: eq
+    expected: { good: "no" }
+    points: 1
+    severity: low
+    criticality: BAJA
+    applicability:
+      anyOf:
+        - { service: sshd }
+        - { service: ssh }
+        - { file: "/etc/ssh/sshd_config" }
+    requiresPrivilege: true
+    remediation: "Si no necesitas túneles, en /etc/ssh/sshd_config pon `AllowTcpForwarding no` y recarga con `systemctl reload ssh`."
+    ensControls: ["op.exp.2"]
+    syntaxConfidence: high
+
+  - id: SSH-15
+    category: SSH
+    os: linux
+    tier: deep
+    description: "Una sesión SSH que queda abierta y sin uso es una puerta que cualquiera con acceso a la terminal puede aprovechar. Acotar ClientAliveCountMax junto con el intervalo de sondeo hace que el servidor cierre las conexiones inactivas u huérfanas."
+    read: { type: sshd_t, key: clientalivecountmax }
+    comparator: le
+    expected: { good: "3" }
+    points: 1
+    severity: low
+    criticality: BAJA
+    applicability:
+      anyOf:
+        - { service: sshd }
+        - { service: ssh }
+        - { file: "/etc/ssh/sshd_config" }
+    requiresPrivilege: true
+    remediation: "En /etc/ssh/sshd_config pon `ClientAliveInterval 300` y `ClientAliveCountMax 3`, y recarga con `systemctl reload ssh`. Así una sesión inactiva se cierra a los 15 minutos (300 segundos x 3)."
+    ensControls: ["op.acc.6", "op.exp.2"]
+    syntaxConfidence: high
+
+  - id: SSH-16
+    category: SSH
+    os: linux
+    tier: deep
+    description: "Una sola conexión SSH puede multiplexar varias sesiones a la vez; sin un tope, esto se presta a abuso y a consumir recursos del servidor. MaxSessions limita cuántas sesiones admite cada conexión."
+    read: { type: sshd_t, key: maxsessions }
+    comparator: le
+    expected: { good: "10" }
+    points: 1
+    severity: low
+    criticality: BAJA
+    applicability:
+      anyOf:
+        - { service: sshd }
+        - { service: ssh }
+        - { file: "/etc/ssh/sshd_config" }
+    requiresPrivilege: true
+    remediation: "En /etc/ssh/sshd_config pon `MaxSessions 10` (o menos según tu uso) y recarga con `systemctl reload ssh`."
+    ensControls: ["op.exp.2"]
     syntaxConfidence: high

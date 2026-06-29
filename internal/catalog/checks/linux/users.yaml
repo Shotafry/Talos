@@ -3,7 +3,7 @@ checks:
     category: USERS
     os: linux
     tier: core
-    description: "La cuenta root debe tener el acceso por contraseña bloqueado en /etc/shadow."
+    description: "La cuenta root debe tener bloqueado el inicio de sesión por contraseña en /etc/shadow. Si root pudiera entrar con contraseña, sería un objetivo directo de ataques de fuerza bruta; lo correcto es administrar con cuentas personales y sudo."
     read: { type: shadow, user: "root" }
     comparator: in
     expected: { good: ["LOCKED", "NOLOGIN"] }
@@ -11,7 +11,7 @@ checks:
     severity: high
     criticality: ALTA
     requiresPrivilege: true
-    remediation: "Bloquea la contraseña de root con `passwd -l root` (administra con sudo)."
+    remediation: "Bloquea la contraseña de root con `passwd -l root` y administra el sistema mediante cuentas individuales con sudo."
     ensControls: ["op.acc.6"]
     syntaxConfidence: high
 
@@ -19,7 +19,7 @@ checks:
     category: USERS
     os: linux
     tier: core
-    description: "Ninguna cuenta debe tener la contraseña vacía."
+    description: "Revisa que ninguna cuenta tenga la contraseña vacía en /etc/shadow. Una contraseña en blanco permite iniciar sesión sin credenciales, así que basta una cuenta así para comprometer el equipo."
     read: { type: shadow, user: "*" }
     comparator: exists
     expected: { good: false }
@@ -27,7 +27,7 @@ checks:
     severity: critical
     criticality: CRITICA
     requiresPrivilege: true
-    remediation: "Asigna contraseña o bloquea (`passwd -l <usuario>`) las cuentas con contraseña vacía."
+    remediation: "Para cada cuenta con contraseña vacía, asígnale una contraseña fuerte o bloquéala con `passwd -l <usuario>` si no debe usarse."
     ensControls: ["op.acc.6"]
     syntaxConfidence: high
 
@@ -35,7 +35,7 @@ checks:
     category: USERS
     os: linux
     tier: core
-    description: "Solo la cuenta root debe tener UID 0 (no debe haber UID 0 duplicados)."
+    description: "El UID 0 otorga privilegios totales de superusuario, así que solo root debería tenerlo. Cualquier otra cuenta con UID 0 es un root encubierto, una técnica habitual para esconder una puerta trasera."
     read: { type: passwd }
     comparator: eq
     expected: { good: "1" }
@@ -43,6 +43,6 @@ checks:
     severity: critical
     criticality: CRITICA
     requiresPrivilege: false
-    remediation: "Cambia el UID de cualquier cuenta distinta de root que tenga UID 0."
+    remediation: "Localiza en /etc/passwd cualquier cuenta distinta de root con UID 0, asígnale un UID normal o elimínala si no es legítima, e investiga cómo se creó."
     ensControls: ["op.acc.1", "op.acc.2"]
     syntaxConfidence: high

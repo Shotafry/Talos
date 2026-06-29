@@ -3,7 +3,7 @@ checks:
     category: TIME
     os: linux
     tier: core
-    description: "El reloj debe estar sincronizado por NTP (necesario para la correlacion forense de logs)."
+    description: "El reloj del equipo debe estar sincronizado por NTP. Si la hora va desfasada, las marcas de tiempo de los logs no encajan entre máquinas y resulta muy difícil reconstruir la secuencia de un incidente."
     read: { type: exec, cmd: ["timedatectl", "show", "-p", "NTPSynchronized", "--value"] }
     comparator: eq
     expected: { good: "yes" }
@@ -11,6 +11,6 @@ checks:
     severity: low
     criticality: BAJA
     requiresPrivilege: false
-    remediation: "Activa la sincronizacion: `timedatectl set-ntp true` (o configura chrony/ntpd)."
+    remediation: "Activa la sincronización con `timedatectl set-ntp true`, o configura un servicio NTP como chrony o ntpd apuntando a servidores de hora fiables."
     ensControls: ["op.exp.8"]
     syntaxConfidence: high

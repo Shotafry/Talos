@@ -3,7 +3,7 @@ checks:
     category: PORTS
     os: linux
     tier: core
-    description: "Telnet (23/tcp) no debe estar a la escucha: transmite credenciales en claro."
+    description: "Telnet (23/tcp) envía el usuario y la contraseña en texto plano por la red, así que cualquiera que escuche el tráfico los captura. No debería estar a la escucha en ningún servidor."
     read: { type: ss, key: "23" }
     comparator: exists
     expected: { good: false }
@@ -11,7 +11,7 @@ checks:
     severity: critical
     criticality: CRITICA
     requiresPrivilege: false
-    remediation: "Desinstala telnetd (`apt purge telnetd`) y usa SSH."
+    remediation: "Detén y desinstala el servidor Telnet (`apt purge telnetd`) y administra el equipo por SSH, que cifra la sesión."
     ensControls: ["mp.com.1", "op.exp.2"]
     syntaxConfidence: high
 
@@ -19,7 +19,7 @@ checks:
     category: PORTS
     os: linux
     tier: core
-    description: "FTP (21/tcp) transmite credenciales en claro; usa SFTP/FTPS."
+    description: "FTP (21/tcp) viaja sin cifrar, por lo que las credenciales y los ficheros circulan en claro y son interceptables. Conviene no tener el servicio a la escucha y usar alternativas cifradas."
     read: { type: ss, key: "21" }
     comparator: exists
     expected: { good: false }
@@ -27,7 +27,7 @@ checks:
     severity: high
     criticality: ALTA
     requiresPrivilege: false
-    remediation: "Sustituye FTP por SFTP/FTPS y detén el servicio FTP en claro."
+    remediation: "Sustituye el FTP en claro por SFTP (sobre SSH) o FTPS, y detén el servicio FTP sin cifrar una vez migrado."
     ensControls: ["mp.com.1", "mp.com.2"]
     syntaxConfidence: high
 
@@ -35,7 +35,7 @@ checks:
     category: PORTS
     os: linux
     tier: deep
-    description: "NFS (2049/tcp) no debería exponerse salvo necesidad y con control de acceso."
+    description: "NFS (2049/tcp) comparte sistemas de ficheros por red y, mal configurado, deja leer o escribir datos a cualquiera que alcance el puerto. Solo debería escuchar cuando se use de verdad y con el acceso restringido."
     read: { type: ss, key: "2049" }
     comparator: exists
     expected: { good: false }
@@ -43,7 +43,7 @@ checks:
     severity: medium
     criticality: MEDIA
     requiresPrivilege: false
-    remediation: "Restringe NFS a la red interna o desactivalo si no se usa."
+    remediation: "Limita NFS a la red interna mediante reglas de exportación y firewall, o desactiva el servicio si no se necesita."
     ensControls: ["mp.com.1", "op.exp.2"]
     syntaxConfidence: high
 
@@ -51,7 +51,7 @@ checks:
     category: PORTS
     os: linux
     tier: deep
-    description: "RDP (3389/tcp) raramente debe escuchar en un servidor Linux."
+    description: "RDP (3389/tcp) es el escritorio remoto de Windows y casi nunca tiene sentido en un servidor Linux; si está a la escucha suele indicar un servicio innecesario que amplía la superficie de ataque."
     read: { type: ss, key: "3389" }
     comparator: exists
     expected: { good: false }
@@ -59,7 +59,7 @@ checks:
     severity: high
     criticality: ALTA
     requiresPrivilege: false
-    remediation: "Desactiva el servicio RDP (xrdp) si no es necesario; usa SSH."
+    remediation: "Detén y deshabilita el servicio RDP (normalmente xrdp) si no se usa, y administra el equipo por SSH."
     ensControls: ["mp.com.1", "op.exp.2"]
     syntaxConfidence: high
 
@@ -67,7 +67,7 @@ checks:
     category: PORTS
     os: linux
     tier: deep
-    description: "Redis (6379) no debe estar a la escucha en red sin autenticación."
+    description: "Redis (6379) viene sin autenticación por defecto, así que expuesto en red permite a cualquiera leer, modificar o borrar los datos e incluso ejecutar comandos. No debe escuchar de forma abierta."
     read: { type: ss, key: "6379" }
     comparator: exists
     expected: { good: false }
@@ -75,7 +75,7 @@ checks:
     severity: high
     criticality: ALTA
     requiresPrivilege: false
-    remediation: "Vincula Redis a 127.0.0.1 y exige contraseña; nunca expuesto sin auth."
+    remediation: "Liga Redis a 127.0.0.1 (directiva `bind`) y exige contraseña (`requirepass`); nunca lo dejes accesible en red sin autenticación."
     ensControls: ["mp.com.4", "op.exp.2"]
     syntaxConfidence: high
 
@@ -83,7 +83,7 @@ checks:
     category: PORTS
     os: linux
     tier: deep
-    description: "Elasticsearch (9200) no debe exponerse sin autenticación."
+    description: "Elasticsearch (9200) expone una API HTTP que, sin autenticación, permite consultar y alterar todos los índices. Dejarlo abierto en red ha causado numerosas filtraciones de datos."
     read: { type: ss, key: "9200" }
     comparator: exists
     expected: { good: false }
@@ -91,7 +91,7 @@ checks:
     severity: high
     criticality: ALTA
     requiresPrivilege: false
-    remediation: "Vincula Elasticsearch a la red interna y activa seguridad/auth."
+    remediation: "Liga Elasticsearch a la red interna o a 127.0.0.1 y activa la seguridad nativa (autenticación y TLS) en lugar de dejarlo abierto."
     ensControls: ["mp.com.4", "op.exp.2"]
     syntaxConfidence: high
 
@@ -99,7 +99,7 @@ checks:
     category: PORTS
     os: linux
     tier: deep
-    description: "MongoDB (27017) no debe exponerse sin autenticación."
+    description: "MongoDB (27017) sin autenticación y a la escucha en red deja toda la base de datos al alcance de cualquiera, un fallo clásico detrás de muchos secuestros y fugas de datos. No debe exponerse así."
     read: { type: ss, key: "27017" }
     comparator: exists
     expected: { good: false }
@@ -107,7 +107,7 @@ checks:
     severity: high
     criticality: ALTA
     requiresPrivilege: false
-    remediation: "Vincula MongoDB a 127.0.0.1/red interna y activa autenticación."
+    remediation: "Liga MongoDB a 127.0.0.1 o a la red interna (`bindIp`) y activa la autenticación (`security.authorization: enabled`)."
     ensControls: ["mp.com.4", "op.exp.2"]
     syntaxConfidence: high
 
@@ -115,7 +115,7 @@ checks:
     category: PORTS
     os: linux
     tier: deep
-    description: "La API de Docker sin TLS (2375) da control total del host; nunca debe escuchar en red."
+    description: "El puerto 2375 expone la API de Docker sin TLS ni autenticación, y quien la alcance puede lanzar contenedores con acceso al host, lo que equivale a control total del servidor. Nunca debe escuchar en red."
     read: { type: ss, key: "2375" }
     comparator: exists
     expected: { good: false }
@@ -123,7 +123,7 @@ checks:
     severity: critical
     criticality: CRITICA
     requiresPrivilege: false
-    remediation: "No expongas el socket TCP de Docker; usa el socket unix o TLS mutuo."
+    remediation: "No publiques el socket TCP de Docker: usa el socket unix local (/var/run/docker.sock) o, si necesitas acceso remoto, protégelo con TLS mutuo en el puerto 2376."
     ensControls: ["mp.com.1", "op.exp.2"]
     syntaxConfidence: high
 
@@ -131,7 +131,7 @@ checks:
     category: PORTS
     os: linux
     tier: deep
-    description: "Los servicios de base de datos no deben escuchar en 0.0.0.0/[::] (exposición pública)."
+    description: "Comprueba que ningún servicio de base de datos escuche en 0.0.0.0 o [::], porque eso lo deja accesible desde cualquier interfaz y, a menudo, desde fuera. Las bases de datos solo deberían atender en direcciones controladas."
     read: { type: ss }
     comparator: eq
     expected: { good: "none" }
@@ -139,6 +139,70 @@ checks:
     severity: high
     criticality: ALTA
     requiresPrivilege: false
-    remediation: "Vincula los servicios de BD a 127.0.0.1 o a la IP interna, no a 0.0.0.0."
+    remediation: "Configura cada servicio de base de datos para escuchar en 127.0.0.1 o en la IP de la red interna, nunca en 0.0.0.0, y respáldalo con reglas de firewall."
     ensControls: ["mp.com.4", "op.exp.2"]
     syntaxConfidence: review
+
+  - id: PORTS-111
+    category: PORTS
+    os: linux
+    tier: deep
+    description: "rpcbind (111) es el mapeador de puertos RPC que indica a los clientes dónde encontrar servicios como NFS; expuesto sin necesidad amplía la superficie de ataque y se ha usado en ataques de amplificación. Solo debería escuchar si realmente usas NFS/RPC."
+    read: { type: ss, key: "111" }
+    comparator: exists
+    expected: { good: false }
+    points: 2
+    severity: medium
+    criticality: MEDIA
+    requiresPrivilege: false
+    remediation: "Si no usas NFS ni otros servicios RPC, detén y deshabilita rpcbind: `systemctl disable --now rpcbind rpcbind.socket`."
+    ensControls: ["mp.com.1", "op.exp.2"]
+    syntaxConfidence: high
+
+  - id: PORTS-5900
+    category: PORTS
+    os: linux
+    tier: deep
+    description: "VNC (5900) ofrece escritorio remoto y, por defecto, lo hace con un cifrado débil o inexistente, de modo que la sesión y las pulsaciones quedan expuestas. No debería atender directamente en la red."
+    read: { type: ss, key: "5900" }
+    comparator: exists
+    expected: { good: false }
+    points: 3
+    severity: high
+    criticality: ALTA
+    requiresPrivilege: false
+    remediation: "No publiques VNC directamente: tunelízalo a través de SSH o accede por VPN, y detén el servidor VNC si no se usa."
+    ensControls: ["mp.com.1", "op.acc.6"]
+    syntaxConfidence: high
+
+  - id: PORTS-6000
+    category: PORTS
+    os: linux
+    tier: deep
+    description: "El servidor X11 escuchando en 6000/tcp permite a un atacante de la red capturar pulsaciones de teclado y el contenido de la pantalla de las aplicaciones gráficas. No debería aceptar conexiones TCP."
+    read: { type: ss, key: "6000" }
+    comparator: exists
+    expected: { good: false }
+    points: 2
+    severity: medium
+    criticality: MEDIA
+    requiresPrivilege: false
+    remediation: "Arranca el servidor X con `-nolisten tcp` para que no abra el puerto, y si necesitas aplicaciones gráficas remotas usa el reenvío X11 de SSH."
+    ensControls: ["mp.com.1"]
+    syntaxConfidence: high
+
+  - id: PORTS-11211
+    category: PORTS
+    os: linux
+    tier: deep
+    description: "memcached (11211) no tiene autenticación, así que expuesto en red deja leer los datos cacheados y, por UDP, sirve de amplificador para ataques DDoS muy potentes. No debería atender fuera del propio equipo."
+    read: { type: ss, key: "11211" }
+    comparator: exists
+    expected: { good: false }
+    points: 3
+    severity: high
+    criticality: ALTA
+    requiresPrivilege: false
+    remediation: "Liga memcached a 127.0.0.1 (`-l 127.0.0.1`) y desactiva el protocolo UDP (`-U 0`) para evitar la amplificación."
+    ensControls: ["mp.com.1", "op.exp.2"]
+    syntaxConfidence: high

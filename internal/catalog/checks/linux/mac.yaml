@@ -3,7 +3,7 @@ checks:
     category: MAC
     os: linux
     tier: core
-    description: "SELinux debe estar en modo Enforcing (control de acceso obligatorio)."
+    description: "SELinux aplica control de acceso obligatorio: confina cada proceso a lo que tiene permitido y limita el daño si uno se ve comprometido. En modo Enforcing las políticas se aplican de verdad; en Permissive solo se registran sin bloquear nada."
     read: { type: exec, cmd: ["getenforce"] }
     comparator: eq
     expected: { good: "Enforcing", medium: "Permissive" }
@@ -14,7 +14,7 @@ checks:
       anyOf:
         - { file: "/etc/selinux/config" }
     requiresPrivilege: false
-    remediation: "Pon `SELINUX=enforcing` en /etc/selinux/config y reinicia."
+    remediation: "Fija `SELINUX=enforcing` en /etc/selinux/config y reinicia; antes conviene pasar un tiempo en Permissive revisando los registros para no romper servicios al activarlo."
     ensControls: ["op.exp.2", "op.acc.2"]
     syntaxConfidence: high
 
@@ -22,7 +22,7 @@ checks:
     category: MAC
     os: linux
     tier: core
-    description: "AppArmor debe estar cargado con perfiles aplicados (control de acceso obligatorio)."
+    description: "AppArmor es el control de acceso obligatorio basado en perfiles por aplicación, que restringe lo que cada programa puede tocar. No basta con tenerlo cargado: los perfiles deben estar en modo enforce para que realmente bloqueen, no solo registren."
     read: { type: exec, cmd: ["aa-status"] }
     comparator: regex
     expected: { good: "profiles are in enforce mode" }
@@ -33,6 +33,6 @@ checks:
       anyOf:
         - { package: apparmor }
     requiresPrivilege: true
-    remediation: "Instala y activa AppArmor (`systemctl enable --now apparmor`) y carga perfiles en enforce."
+    remediation: "Instala y activa AppArmor (`systemctl enable --now apparmor`) y pon los perfiles en modo enforce con `aa-enforce` en lugar de dejarlos en complain."
     ensControls: ["op.exp.2", "op.acc.2"]
     syntaxConfidence: review

@@ -3,7 +3,7 @@ checks:
     category: USERS
     os: windows
     tier: core
-    description: "La longitud minima de contraseña local debe ser robusta (>= 14)."
+    description: "Si las cuentas locales admiten contraseñas cortas, se rompen por fuerza bruta en poco tiempo. Exigir 14 caracteres o más eleva mucho el coste de adivinarlas."
     read: { type: netaccounts, key: minPwLen }
     comparator: ge
     expected: { good: "14", medium: "8" }
@@ -11,7 +11,7 @@ checks:
     severity: high
     criticality: ALTA
     requiresPrivilege: false
-    remediation: "Establece una longitud minima de contraseña >= 14 (net accounts /minpwlen:14 o por GPO/Directiva de seguridad local)."
+    remediation: "Sube la longitud mínima a 14 con `net accounts /minpwlen:14`, o por directiva de seguridad local (`secpol.msc` > Directivas de cuenta > Directiva de contraseñas) o por GPO."
     ensControls: ["op.acc.5", "op.acc.6"]
     syntaxConfidence: high
 
@@ -19,7 +19,7 @@ checks:
     category: USERS
     os: windows
     tier: deep
-    description: "Las contraseñas locales deben caducar (caducidad maxima acotada, no 'nunca')."
+    description: "Una contraseña que nunca caduca puede seguir siendo valida años despues de filtrarse. Acotar su vida util obliga a renovarla y limita la ventana de un robo no detectado."
     read: { type: netaccounts, key: maxPwAge }
     comparator: le
     expected: { good: "365" }
@@ -27,7 +27,7 @@ checks:
     severity: low
     criticality: BAJA
     requiresPrivilege: false
-    remediation: "Configura una caducidad maxima de contraseña (p.ej. net accounts /maxpwage:365). 'Nunca caduca' se considera inseguro."
+    remediation: "Define una caducidad máxima razonable, por ejemplo `net accounts /maxpwage:365`, o por GPO/directiva de seguridad local. Evita el valor 'nunca caduca'."
     ensControls: ["op.acc.5"]
     syntaxConfidence: high
 
@@ -35,7 +35,7 @@ checks:
     category: USERS
     os: windows
     tier: core
-    description: "Debe existir bloqueo de cuenta tras varios intentos fallidos (umbral entre 1 y 5)."
+    description: "Sin bloqueo de cuenta, un atacante puede probar contraseñas sin limite hasta dar con la buena. Bloquear tras unos pocos intentos fallidos (entre 1 y 5) corta los ataques de fuerza bruta en seco."
     read: { type: netaccounts, key: lockoutThreshold }
     comparator: range
     # 1-5 intentos = bueno (alineado con CIS); 6-10 = aceptable pero flojo (WARN); 0 = sin
@@ -45,6 +45,6 @@ checks:
     severity: medium
     criticality: MEDIA
     requiresPrivilege: false
-    remediation: "Configura un umbral de bloqueo de cuenta entre 1 y 5 intentos (net accounts /lockoutthreshold:5). Un valor 0 desactiva el bloqueo."
+    remediation: "Fija el umbral de bloqueo entre 1 y 5 intentos con `net accounts /lockoutthreshold:5`, o por GPO/directiva de seguridad local. Ten en cuenta que el valor 0 desactiva por completo el bloqueo."
     ensControls: ["op.acc.5", "op.exp.2"]
     syntaxConfidence: high

@@ -3,7 +3,7 @@ checks:
     category: FIREWALL
     os: windows
     tier: core
-    description: "El cortafuegos de Windows debe estar activo en el perfil de Dominio."
+    description: "El perfil de Dominio se aplica cuando el equipo esta en la red corporativa. Tener el cortafuegos activo ahi evita que una maquina ya comprometida ataque libremente a las demas del dominio."
     read: { type: cmdlet, cmd: ["(Get-NetFirewallProfile -Name Domain).Enabled"] }
     comparator: eq
     expected: { good: "true" }
@@ -11,7 +11,7 @@ checks:
     severity: high
     criticality: ALTA
     requiresPrivilege: false
-    remediation: "Activa el cortafuegos del perfil de Dominio: Set-NetFirewallProfile -Name Domain -Enabled True."
+    remediation: "Activa el cortafuegos del perfil de Dominio con `Set-NetFirewallProfile -Name Domain -Enabled True`, o por GPO si los equipos se gestionan de forma centralizada."
     ensControls: ["mp.com.1", "op.exp.2"]
     syntaxConfidence: high
 
@@ -19,7 +19,7 @@ checks:
     category: FIREWALL
     os: windows
     tier: core
-    description: "El cortafuegos de Windows debe estar activo en el perfil Privado."
+    description: "El perfil Privado cubre redes de confianza como la de casa o una oficina pequeña. Aun en esas redes el cortafuegos debe seguir activo, porque cualquier equipo vecino infectado podria intentar alcanzar al tuyo."
     read: { type: cmdlet, cmd: ["(Get-NetFirewallProfile -Name Private).Enabled"] }
     comparator: eq
     expected: { good: "true" }
@@ -27,7 +27,7 @@ checks:
     severity: high
     criticality: ALTA
     requiresPrivilege: false
-    remediation: "Activa el cortafuegos del perfil Privado: Set-NetFirewallProfile -Name Private -Enabled True."
+    remediation: "Activa el cortafuegos del perfil Privado con `Set-NetFirewallProfile -Name Private -Enabled True`, o por GPO si los equipos se gestionan de forma centralizada."
     ensControls: ["mp.com.1", "op.exp.2"]
     syntaxConfidence: high
 
@@ -35,7 +35,7 @@ checks:
     category: FIREWALL
     os: windows
     tier: core
-    description: "El cortafuegos de Windows debe estar activo en el perfil Publico (redes no confiables)."
+    description: "El perfil Publico se activa en redes no confiables, como el wifi de un aeropuerto o una cafeteria, donde cualquiera puede estar a la escucha. Es justo donde el cortafuegos resulta más critico para no exponer servicios del equipo."
     read: { type: cmdlet, cmd: ["(Get-NetFirewallProfile -Name Public).Enabled"] }
     comparator: eq
     expected: { good: "true" }
@@ -43,6 +43,6 @@ checks:
     severity: high
     criticality: ALTA
     requiresPrivilege: false
-    remediation: "Activa el cortafuegos del perfil Publico: Set-NetFirewallProfile -Name Public -Enabled True."
+    remediation: "Activa el cortafuegos del perfil Publico con `Set-NetFirewallProfile -Name Public -Enabled True`, o por GPO si los equipos se gestionan de forma centralizada."
     ensControls: ["mp.com.1", "op.exp.2"]
     syntaxConfidence: high

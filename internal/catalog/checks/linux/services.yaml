@@ -3,7 +3,7 @@ checks:
     category: SERVICES
     os: linux
     tier: deep
-    description: "avahi-daemon (descubrimiento mDNS) no debería ejecutarse en un servidor."
+    description: "avahi-daemon anuncia y descubre servicios en la red local por mDNS, algo útil en un equipo de escritorio pero innecesario en un servidor. Mantenerlo activo añade un servicio expuesto que no aporta nada y amplía la superficie de ataque."
     read: { type: systemd, unit: "avahi-daemon" }
     comparator: eq
     expected: { good: "inactive" }
@@ -14,7 +14,7 @@ checks:
       anyOf:
         - { service: "avahi-daemon" }
     requiresPrivilege: false
-    remediation: "Desactiva avahi: `systemctl disable --now avahi-daemon`."
+    remediation: "Si no necesitas descubrimiento mDNS, deshabilítalo y pársalo con `systemctl disable --now avahi-daemon`."
     ensControls: ["op.exp.2"]
     syntaxConfidence: high
 
@@ -22,7 +22,7 @@ checks:
     category: SERVICES
     os: linux
     tier: deep
-    description: "El servicio de impresion CUPS no debería ejecutarse en un servidor."
+    description: "CUPS es el sistema de impresión de Linux: tiene sentido en un puesto de trabajo, pero rara vez en un servidor. Dejarlo activo abre un servicio de red con historial de vulnerabilidades sin ninguna necesidad."
     read: { type: systemd, unit: "cups" }
     comparator: eq
     expected: { good: "inactive" }
@@ -33,7 +33,7 @@ checks:
       anyOf:
         - { service: "cups" }
     requiresPrivilege: false
-    remediation: "Desactiva CUPS: `systemctl disable --now cups`."
+    remediation: "Si este servidor no imprime, deshabilita CUPS y páralo con `systemctl disable --now cups`."
     ensControls: ["op.exp.2"]
     syntaxConfidence: high
 
@@ -41,7 +41,7 @@ checks:
     category: SERVICES
     os: linux
     tier: deep
-    description: "rpcbind expone servicios RPC; no debería ejecutarse salvo que se use NFS."
+    description: "rpcbind es el mapeador de puertos que usan servicios RPC como NFS, y suele ser blanco de ataques de amplificación y de reconocimiento. Si no usas NFS u otro servicio RPC, no tiene por qué estar escuchando."
     read: { type: systemd, unit: "rpcbind" }
     comparator: eq
     expected: { good: "inactive" }
@@ -52,6 +52,120 @@ checks:
       anyOf:
         - { service: "rpcbind" }
     requiresPrivilege: false
-    remediation: "Desactiva rpcbind si no usas NFS: `systemctl disable --now rpcbind`."
+    remediation: "Si no usas NFS ni otros servicios RPC, deshabilita rpcbind y páralo con `systemctl disable --now rpcbind`."
     ensControls: ["op.exp.2", "mp.com.1"]
+    syntaxConfidence: high
+
+  - id: SVC-04
+    category: SERVICES
+    os: linux
+    tier: deep
+    description: "El servidor NFS comparte sistemas de ficheros por red, a menudo con controles de acceso laxos. Si esta máquina no sirve recursos por NFS, ejecutarlo solo expone datos y un servicio más al exterior."
+    read: { type: systemd, unit: "nfs-server" }
+    comparator: eq
+    expected: { good: "inactive" }
+    points: 1
+    severity: low
+    criticality: BAJA
+    applicability:
+      anyOf:
+        - { service: "nfs-server" }
+    requiresPrivilege: false
+    remediation: "Si esta máquina no sirve recursos por NFS, deshabilita el servidor y páralo con `systemctl disable --now nfs-server`."
+    ensControls: ["op.exp.2", "mp.com.1"]
+    syntaxConfidence: high
+
+  - id: SVC-05
+    category: SERVICES
+    os: linux
+    tier: deep
+    description: "Samba (smbd) ofrece comparticiones de ficheros por SMB, el protocolo de carpetas de red de Windows, y es un objetivo habitual de ransomware y exploits. Si este servidor no comparte ficheros por SMB, no debería tenerlo en marcha."
+    read: { type: systemd, unit: "smbd" }
+    comparator: eq
+    expected: { good: "inactive" }
+    points: 1
+    severity: low
+    criticality: BAJA
+    applicability:
+      anyOf:
+        - { service: "smbd" }
+    requiresPrivilege: false
+    remediation: "Si no compartes ficheros por SMB, deshabilita Samba y páralo con `systemctl disable --now smbd`."
+    ensControls: ["op.exp.2", "mp.com.1"]
+    syntaxConfidence: high
+
+  - id: SVC-06
+    category: SERVICES
+    os: linux
+    tier: deep
+    description: "SNMP (snmpd) publica métricas e información del sistema por red, y en sus versiones antiguas lo hace con cadenas de comunidad fáciles de adivinar como public. Si no monitorizas por SNMP, expone datos del equipo sin necesidad."
+    read: { type: systemd, unit: "snmpd" }
+    comparator: eq
+    expected: { good: "inactive" }
+    points: 1
+    severity: low
+    criticality: BAJA
+    applicability:
+      anyOf:
+        - { service: "snmpd" }
+    requiresPrivilege: false
+    remediation: "Si no monitorizas por SNMP, deshabilítalo y páralo con `systemctl disable --now snmpd`. Si lo necesitas, usa SNMPv3 con autenticación y cifrado, nunca v1/v2c con cadenas de comunidad por defecto."
+    ensControls: ["op.exp.2", "mp.com.1"]
+    syntaxConfidence: high
+
+  - id: SVC-07
+    category: SERVICES
+    os: linux
+    tier: deep
+    description: "slapd es el servicio de OpenLDAP, es decir, un servidor de directorio. Un equipo que solo consulta el directorio como cliente no necesita ejecutarlo, y tenerlo activo expone un servicio con datos de identidad sensibles."
+    read: { type: systemd, unit: "slapd" }
+    comparator: eq
+    expected: { good: "inactive" }
+    points: 1
+    severity: low
+    criticality: BAJA
+    applicability:
+      anyOf:
+        - { service: "slapd" }
+    requiresPrivilege: false
+    remediation: "Si este equipo no es un servidor de directorio, deshabilita slapd y páralo con `systemctl disable --now slapd`."
+    ensControls: ["op.exp.2"]
+    syntaxConfidence: high
+
+  - id: SVC-08
+    category: SERVICES
+    os: linux
+    tier: deep
+    description: "dovecot sirve buzones por IMAP y POP, así que solo tiene sentido en un servidor de correo. En cualquier otro host expone un servicio de autenticación y acceso a correo que un atacante puede sondear."
+    read: { type: systemd, unit: "dovecot" }
+    comparator: eq
+    expected: { good: "inactive" }
+    points: 1
+    severity: low
+    criticality: BAJA
+    applicability:
+      anyOf:
+        - { service: "dovecot" }
+    requiresPrivilege: false
+    remediation: "Si este host no es un servidor de correo, deshabilita dovecot y páralo con `systemctl disable --now dovecot`."
+    ensControls: ["op.exp.2"]
+    syntaxConfidence: high
+
+  - id: SVC-09
+    category: SERVICES
+    os: linux
+    tier: deep
+    description: "vsftpd sirve ficheros por FTP, un protocolo que envía usuario y contraseña en texto claro, fáciles de interceptar en la red. Hoy no hay motivo para usarlo cuando SFTP ofrece lo mismo cifrado sobre SSH."
+    read: { type: systemd, unit: "vsftpd" }
+    comparator: eq
+    expected: { good: "inactive" }
+    points: 2
+    severity: medium
+    criticality: MEDIA
+    applicability:
+      anyOf:
+        - { service: "vsftpd" }
+    requiresPrivilege: false
+    remediation: "Deshabilita vsftpd y páralo con `systemctl disable --now vsftpd`, y traslada las transferencias a SFTP (que ya viene incluido con el servidor SSH)."
+    ensControls: ["op.exp.2", "mp.com.3"]
     syntaxConfidence: high

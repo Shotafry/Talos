@@ -3,7 +3,7 @@ checks:
     category: AUDIT
     os: linux
     tier: core
-    description: "El demonio auditd debe estar activo para registrar la actividad del sistema."
+    description: "auditd es el demonio que deja constancia de la actividad relevante del sistema (accesos, cambios, llamadas sensibles). Si no está activo, no hay rastro para investigar un incidente."
     read: { type: systemd, unit: "auditd" }
     comparator: eq
     expected: { good: "active" }
@@ -14,7 +14,7 @@ checks:
       anyOf:
         - { service: "auditd" }
     requiresPrivilege: false
-    remediation: "Instala y activa auditd: `systemctl enable --now auditd` y carga reglas en /etc/audit/rules.d/."
+    remediation: "Instala el paquete auditd, arráncalo y déjalo permanente con `systemctl enable --now auditd`, y define las reglas de auditoría en /etc/audit/rules.d/."
     ensControls: ["op.exp.8", "op.mon.1"]
     syntaxConfidence: high
 
@@ -22,7 +22,7 @@ checks:
     category: AUDIT
     os: linux
     tier: deep
-    description: "journald debe guardar los logs de forma persistente (sobreviven al reinicio)."
+    description: "Por defecto journald guarda los logs en memoria y los pierde al reiniciar. Almacenarlos de forma persistente en disco permite revisar lo ocurrido tras un reinicio o una caída, algo esencial para investigar incidentes."
     read: { type: stat, path: "/var/log/journal" }
     comparator: exists
     expected: { good: true }
@@ -30,6 +30,44 @@ checks:
     severity: low
     criticality: BAJA
     requiresPrivilege: false
-    remediation: "Activa el almacenamiento persistente: crea /var/log/journal y pon Storage=persistent en journald.conf."
+    remediation: "Crea el directorio /var/log/journal y fija Storage=persistent en /etc/systemd/journald.conf; luego reinicia systemd-journald para que los logs se guarden en disco."
     ensControls: ["op.exp.8"]
     syntaxConfidence: high
+
+  - id: AUD-03
+    category: AUDIT
+    os: linux
+    tier: deep
+    description: "Comprueba en el propio kernel (`auditctl -s`) que la auditoría está habilitada y aceptando eventos. Aunque el servicio esté arrancado, si el subsistema del kernel está deshabilitado no se registra nada."
+    read: { type: exec, cmd: ["auditctl", "-s"] }
+    comparator: regex
+    expected: { good: "enabled +[12]" }
+    points: 2
+    severity: medium
+    criticality: MEDIA
+    applicability:
+      anyOf:
+        - { service: "auditd" }
+    requiresPrivilege: true
+    remediation: "Instala y arranca auditd (`systemctl enable --now auditd`); si sigue deshabilitado, fuerza la habilitación de la auditoría del kernel con `auditctl -e 1` y deja las reglas en /etc/audit/rules.d/."
+    ensControls: ["op.exp.8"]
+    syntaxConfidence: review
+
+  - id: AUD-04
+    category: AUDIT
+    os: linux
+    tier: deep
+    description: "Tener auditd activo no basta: si no hay reglas cargadas (`auditctl -l` devuelve 'No rules'), el demonio funciona pero no vigila nada. Esta comprobación verifica que haya un conjunto de reglas en uso."
+    read: { type: exec, cmd: ["auditctl", "-l"] }
+    comparator: nregex
+    expected: { good: "No rules" }
+    points: 2
+    severity: medium
+    criticality: MEDIA
+    applicability:
+      anyOf:
+        - { service: "auditd" }
+    requiresPrivilege: true
+    remediation: "Coloca un conjunto de reglas en /etc/audit/rules.d/ (por ejemplo la base recomendada por CIS) y aplícalas con `augenrules --load`."
+    ensControls: ["op.exp.8"]
+    syntaxConfidence: review

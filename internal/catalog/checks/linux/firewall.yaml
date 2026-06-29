@@ -3,7 +3,7 @@ checks:
     category: FIREWALL
     os: linux
     tier: core
-    description: "El cortafuegos UFW debe estar activo (perimetro de host)."
+    description: "UFW es el cortafuegos del propio host y debería estar activo para filtrar el tráfico de red entrante. Sin él, cualquier servicio a la escucha queda directamente expuesto a quien alcance la máquina."
     read: { type: exec, cmd: ["ufw", "status"] }
     comparator: regex
     expected: { good: "Status: active" }
@@ -14,7 +14,7 @@ checks:
       anyOf:
         - { package: ufw }
     requiresPrivilege: true
-    remediation: "Activa el cortafuegos con `ufw enable` (asegura antes que el puerto SSH este permitido)."
+    remediation: "Permite primero el puerto SSH (`ufw allow OpenSSH`) para no perder el acceso remoto y luego activa el cortafuegos con `ufw enable`."
     ensControls: ["mp.com.1", "op.exp.2"]
     syntaxConfidence: high
 
@@ -22,7 +22,7 @@ checks:
     category: FIREWALL
     os: linux
     tier: core
-    description: "El cortafuegos firewalld debe estar en ejecución."
+    description: "firewalld es el servicio de cortafuegos por zonas habitual en distribuciones tipo RHEL y debe estar en ejecución para filtrar el tráfico. Si está parado, las reglas no se aplican y los servicios quedan al descubierto."
     read: { type: exec, cmd: ["firewall-cmd", "--state"] }
     comparator: eq
     expected: { good: "running" }
@@ -33,7 +33,7 @@ checks:
       anyOf:
         - { package: firewalld }
     requiresPrivilege: false
-    remediation: "Activa firewalld con `systemctl enable --now firewalld`."
+    remediation: "Arranca firewalld y déjalo permanente con `systemctl enable --now firewalld`, y revisa que la zona activa solo permita los servicios necesarios."
     ensControls: ["mp.com.1", "op.exp.2"]
     syntaxConfidence: high
 
@@ -41,7 +41,7 @@ checks:
     category: FIREWALL
     os: linux
     tier: deep
-    description: "nftables debe tener un conjunto de reglas cargado (no vacio)."
+    description: "nftables es el motor de filtrado del kernel, pero solo protege si tiene reglas cargadas. Un conjunto de reglas vacío equivale a no tener cortafuegos: todo el tráfico pasa sin restricción."
     read: { type: exec, cmd: ["nft", "list", "ruleset"] }
     comparator: regex
     expected: { good: "(chain|table)" }
@@ -52,6 +52,6 @@ checks:
       anyOf:
         - { package: nftables }
     requiresPrivilege: true
-    remediation: "Define reglas nftables en /etc/nftables.conf y aplicalas; no dejes el ruleset vacio."
+    remediation: "Define un conjunto de reglas en /etc/nftables.conf con una política por defecto restrictiva y aplícalo (`nft -f /etc/nftables.conf`); no dejes el ruleset vacío."
     ensControls: ["mp.com.1", "op.exp.2"]
     syntaxConfidence: review

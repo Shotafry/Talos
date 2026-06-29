@@ -3,7 +3,7 @@ checks:
     category: SMB
     os: windows
     tier: core
-    description: "El protocolo SMBv1 (obsoleto e inseguro, vector de WannaCry/EternalBlue) debe estar desactivado."
+    description: "SMBv1 es la versión original del protocolo de compartición de archivos, plagada de fallos y explotada masivamente por WannaCry y EternalBlue para propagarse por la red. Está obsoleta y debe estar desactivada en cualquier equipo."
     read: { type: registry, path: 'HKLM\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters', name: 'SMB1' }
     comparator: in
     expected: { good: ["absent", "0"] }
@@ -11,7 +11,7 @@ checks:
     severity: critical
     criticality: CRITICA
     requiresPrivilege: false
-    remediation: "Desactiva SMBv1: Disable-WindowsOptionalFeature -Online -FeatureName SMB1Protocol. La ausencia de la clave equivale a SMBv1 desactivado."
+    remediation: "Desactiva SMBv1 desinstalando la característica con Disable-WindowsOptionalFeature -Online -FeatureName SMB1Protocol y reinicia. La ausencia de la clave SMB1 equivale a SMBv1 desactivado, así que no hace falta crearla."
     ensControls: ["mp.com.1", "op.exp.3"]
     syntaxConfidence: high
 
@@ -19,7 +19,7 @@ checks:
     category: SMB
     os: windows
     tier: core
-    description: "El servidor SMB debe exigir la firma de paquetes (evita ataques de retransmision/relay)."
+    description: "La firma de paquetes SMB garantiza la integridad y autenticidad de cada mensaje, de modo que un atacante no pueda interceptar y reutilizar una sesión (ataques de retransmisión o relay). El servidor SMB debe exigirla siempre."
     read: { type: registry, path: 'HKLM\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters', name: 'RequireSecuritySignature' }
     comparator: eq
     expected: { good: "1" }
@@ -27,7 +27,7 @@ checks:
     severity: high
     criticality: ALTA
     requiresPrivilege: false
-    remediation: "Exige la firma SMB del servidor (GPO 'Servidor de red Microsoft: firmar digitalmente las comunicaciones (siempre)') o RequireSecuritySignature=1."
+    remediation: 'Exige la firma SMB del servidor poniendo RequireSecuritySignature=1 en HKLM\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters, o por GPO con "Servidor de red Microsoft: firmar digitalmente las comunicaciones (siempre)".'
     ensControls: ["mp.com.2", "op.exp.2"]
     syntaxConfidence: high
 
@@ -35,7 +35,7 @@ checks:
     category: SMB
     os: windows
     tier: core
-    description: "El cliente SMB debe exigir la firma de paquetes."
+    description: "Igual que en el servidor, el cliente SMB debe exigir la firma de paquetes para que cada conexión saliente verifique la integridad y autenticidad del tráfico y no pueda ser manipulada por un intermediario en la red."
     read: { type: registry, path: 'HKLM\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters', name: 'RequireSecuritySignature' }
     comparator: eq
     expected: { good: "1" }
@@ -43,7 +43,7 @@ checks:
     severity: medium
     criticality: MEDIA
     requiresPrivilege: false
-    remediation: "Exige la firma SMB del cliente (GPO 'Cliente de redes Microsoft: firmar digitalmente las comunicaciones (siempre)') o RequireSecuritySignature=1."
+    remediation: 'Exige la firma SMB del cliente poniendo RequireSecuritySignature=1 en HKLM\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters, o por GPO con "Cliente de redes Microsoft: firmar digitalmente las comunicaciones (siempre)".'
     ensControls: ["mp.com.2", "op.exp.2"]
     syntaxConfidence: high
 
@@ -51,7 +51,7 @@ checks:
     category: SMB
     os: windows
     tier: core
-    description: "Los inicios de sesión de invitado no seguros en SMB deben estar prohibidos (evita conexiones sin autenticar a recursos)."
+    description: "El acceso de invitado inseguro permite conectar a recursos compartidos SMB sin autenticarse ni firmar, lo que abre la puerta a ataques de intermediario y a la exposición de datos. Estos inicios de sesión de invitado deben estar prohibidos."
     read: { type: registry, path: 'HKLM\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters', name: 'AllowInsecureGuestAuth' }
     comparator: in
     expected: { good: ["absent", "0"] }
@@ -59,6 +59,6 @@ checks:
     severity: medium
     criticality: MEDIA
     requiresPrivilege: false
-    remediation: "Prohibe el acceso de invitado inseguro: AllowInsecureGuestAuth=0. La ausencia de la clave ya es seguro por defecto."
+    remediation: 'Prohíbe el acceso de invitado inseguro poniendo AllowInsecureGuestAuth=0 en HKLM\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters, o por GPO con "Habilitar inicios de sesión de invitado no seguros" deshabilitado. Si la clave no existe, ya es seguro por defecto.'
     ensControls: ["op.acc.5", "op.exp.2"]
     syntaxConfidence: high

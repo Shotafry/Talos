@@ -5,7 +5,7 @@ checks:
     category: VULN
     os: linux
     tier: core
-    description: "Los espacios de nombres de usuario sin privilegio habilitan muchas escaladas locales y fugas de contenedor."
+    description: "Permitir que usuarios sin privilegios creen espacios de nombres de usuario amplía mucho la superficie del kernel y está detrás de numerosas escaladas locales a root y fugas de contenedor. Conviene deshabilitarlo si ninguna aplicación legítima lo necesita."
     read: { type: sysctl, key: "kernel.unprivileged_userns_clone" }
     comparator: eq
     expected: { good: "0" }
@@ -13,7 +13,7 @@ checks:
     severity: high
     criticality: ALTA
     requiresPrivilege: false
-    remediation: "Pon `kernel.unprivileged_userns_clone = 0` en sysctl (si ninguna app legitima lo necesita)."
+    remediation: "Fija `kernel.unprivileged_userns_clone = 0` en /etc/sysctl.d y aplícalo con `sysctl --system`, siempre que ninguna aplicación legítima (por ejemplo ciertos sandboxes o contenedores rootless) lo requiera."
     ensControls: ["op.exp.2"]
     syntaxConfidence: review
 
@@ -21,7 +21,7 @@ checks:
     category: VULN
     os: linux
     tier: core
-    description: "Un /etc/ld.so.preload no vacio suele ser persistencia de rootkit o escalada (precarga de librerias en todo binario)."
+    description: "El fichero /etc/ld.so.preload fuerza la precarga de librerías en todos los binarios dinámicos del sistema, y cuando no está vacío suele ser un mecanismo de persistencia de rootkits o de escalada. Su presencia inesperada es un fuerte indicio de compromiso."
     read: { type: stat, path: "/etc/ld.so.preload" }
     comparator: exists
     expected: { good: false }
@@ -29,7 +29,7 @@ checks:
     severity: critical
     criticality: CRITICA
     requiresPrivilege: false
-    remediation: "Investiga y elimina /etc/ld.so.preload si no lo pusiste tu (suele indicar compromiso)."
+    remediation: "Si no creaste tú /etc/ld.so.preload, trátalo como un posible compromiso: revisa las librerías que referencia antes de borrarlo y analiza el equipo en busca de un rootkit."
     ensControls: ["op.exp.6", "op.exp.2"]
     syntaxConfidence: high
 
@@ -37,7 +37,7 @@ checks:
     category: VULN
     os: linux
     tier: deep
-    description: "Deshabilitar kexec evita cargar un kernel arbitrario sin reiniciar (evasion de arranque seguro)."
+    description: "kexec permite arrancar otro kernel sin pasar por el reinicio ni por la BIOS, lo que un atacante con privilegios puede usar para cargar un kernel manipulado y saltarse el arranque seguro. Deshabilitarlo cierra esa vía."
     read: { type: sysctl, key: "kernel.kexec_load_disabled" }
     comparator: eq
     expected: { good: "1" }
@@ -45,7 +45,7 @@ checks:
     severity: low
     criticality: BAJA
     requiresPrivilege: false
-    remediation: "Pon `kernel.kexec_load_disabled = 1` en sysctl."
+    remediation: "Fija `kernel.kexec_load_disabled = 1` en /etc/sysctl.d y aplícalo con `sysctl --system`; ten en cuenta que es irreversible hasta el siguiente reinicio."
     ensControls: ["op.exp.2"]
     syntaxConfidence: high
 
@@ -53,7 +53,7 @@ checks:
     category: VULN
     os: linux
     tier: deep
-    description: "El patron de volcado de memoria no debe canalizarse a un programa externo (vector de algunas escaladas)."
+    description: "Cuando el patrón de volcado de memoria (core_pattern) canaliza los cores a un programa externo, ese programa se ejecuta como root al producirse un fallo, lo que se ha aprovechado en varias escaladas de privilegios. Salvo que uses un gestor de cores controlado, no debería apuntar a una tubería."
     read: { type: sysctl, key: "kernel.core_pattern" }
     comparator: nregex
     expected: { good: "^\\|" }
@@ -61,7 +61,7 @@ checks:
     severity: medium
     criticality: MEDIA
     requiresPrivilege: false
-    remediation: "Evita un `core_pattern` que empiece por `|` (tuberia a un programa) salvo que uses un gestor de cores controlado."
+    remediation: "Ajusta `kernel.core_pattern` para que no empiece por `|` (que tubería el core a un programa); usa una ruta de fichero, o un gestor de cores de confianza si de verdad lo necesitas."
     ensControls: ["op.exp.2"]
     syntaxConfidence: review
 
@@ -69,7 +69,7 @@ checks:
     category: VULN
     os: linux
     tier: core
-    description: "Las reglas sudo con NOPASSWD permiten escalar a root sin contraseña (escalada trivial si se roba una sesión)."
+    description: "Las reglas de sudo con NOPASSWD dejan ejecutar comandos como root sin pedir contraseña, de modo que quien robe una sesión de ese usuario escala a root de forma inmediata. Deberían limitarse al mínimo imprescindible."
     read: { type: file, path: "/etc/sudoers" }
     comparator: nregex
     expected: { good: "NOPASSWD" }
@@ -80,6 +80,6 @@ checks:
       anyOf:
         - { file: "/etc/sudoers" }
     requiresPrivilege: true
-    remediation: "Revisa /etc/sudoers y /etc/sudoers.d: evita NOPASSWD salvo para automatismos muy acotados."
+    remediation: "Revisa /etc/sudoers y /etc/sudoers.d con `visudo` y elimina los NOPASSWD que no sean estrictamente necesarios, dejándolos solo para automatismos muy acotados a comandos concretos."
     ensControls: ["op.acc.2", "op.acc.6"]
     syntaxConfidence: review

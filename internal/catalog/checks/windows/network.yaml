@@ -3,7 +3,7 @@ checks:
     category: NAMERES
     os: windows
     tier: core
-    description: "LLMNR (resolucion multicast de nombres) debe estar desactivado (vector de envenenamiento y robo de hashes)."
+    description: "LLMNR resuelve nombres por multidifusión cuando falla el DNS, y un atacante en la misma red puede responder en lugar del servidor legítimo para capturar hashes de credenciales (envenenamiento LLMNR). Debe estar desactivado."
     read: { type: registry, path: 'HKLM\SOFTWARE\Policies\Microsoft\Windows NT\DNSClient', name: 'EnableMulticast' }
     comparator: eq
     expected: { good: "0" }
@@ -11,7 +11,7 @@ checks:
     severity: medium
     criticality: MEDIA
     requiresPrivilege: false
-    remediation: "Desactiva LLMNR por GPO (Cliente DNS > Desactivar la resolucion de nombres multidifusion) o EnableMulticast=0. Ausente equivale a LLMNR activo."
+    remediation: 'Desactiva LLMNR por GPO (Plantillas administrativas > Red > Cliente DNS > Desactivar la resolución de nombres multidifusión) o pon EnableMulticast=0 en HKLM\SOFTWARE\Policies\Microsoft\Windows NT\DNSClient. Si la clave no existe, LLMNR sigue activo.'
     ensControls: ["mp.com.1", "op.exp.2"]
     syntaxConfidence: high
 
@@ -19,7 +19,7 @@ checks:
     category: TLS
     os: windows
     tier: deep
-    description: "TLS 1.2 debe estar disponible como protocolo de servidor SChannel (no deshabilitado)."
+    description: "TLS 1.2 es el protocolo de cifrado mínimo aceptable para las comunicaciones del servidor, así que SChannel debe ofrecerlo y no tenerlo deshabilitado explícitamente. Si está deshabilitado, los clientes caen a protocolos antiguos o no pueden conectar de forma segura."
     read: { type: registry, path: 'HKLM\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Server', name: 'Enabled' }
     comparator: in
     # SChannel marca "habilitado" como 1 o, idiomaticamente, 0xffffffff (=4294967295). Ausente
@@ -29,6 +29,38 @@ checks:
     severity: low
     criticality: BAJA
     requiresPrivilege: false
-    remediation: "No deshabilites TLS 1.2 en SChannel (Enabled=1 o clave ausente = habilitado por defecto). Deshabilita en cambio SSL 3.0/TLS 1.0/1.1."
+    remediation: 'Mantén TLS 1.2 habilitado en SCHANNEL\Protocols\TLS 1.2\Server: con Enabled=1 o con la clave ausente queda habilitado por defecto. Lo que debes deshabilitar son los protocolos viejos (SSL 3.0, TLS 1.0 y TLS 1.1).'
+    ensControls: ["mp.com.2"]
+    syntaxConfidence: high
+
+  - id: WIN-TLS-02
+    category: TLS
+    os: windows
+    tier: deep
+    description: "TLS 1.0 es un protocolo obsoleto con debilidades criptográficas conocidas (BEAST, downgrade) que ya no cumple los estándares actuales. SChannel debe tenerlo deshabilitado como protocolo de servidor para que ningún cliente pueda negociarlo."
+    read: { type: registry, path: 'HKLM\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.0\Server', name: 'Enabled' }
+    comparator: in
+    expected: { good: ["0"], medium: ["absent"] }
+    points: 2
+    severity: medium
+    criticality: MEDIA
+    requiresPrivilege: false
+    remediation: 'Deshabilita TLS 1.0 en SCHANNEL\Protocols\TLS 1.0\Server poniendo Enabled=0 y DisabledByDefault=1, y reinicia. Ten en cuenta que si la clave no existe el protocolo puede seguir activo en sistemas antiguos, así que crea la clave explícitamente.'
+    ensControls: ["mp.com.2"]
+    syntaxConfidence: high
+
+  - id: WIN-TLS-03
+    category: TLS
+    os: windows
+    tier: deep
+    description: "TLS 1.1 es un protocolo obsoleto, retirado por los navegadores y los estándares de la industria por su criptografía débil. SChannel debe tenerlo deshabilitado como protocolo de servidor para forzar el uso de TLS 1.2 o superior."
+    read: { type: registry, path: 'HKLM\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.1\Server', name: 'Enabled' }
+    comparator: in
+    expected: { good: ["0"], medium: ["absent"] }
+    points: 2
+    severity: medium
+    criticality: MEDIA
+    requiresPrivilege: false
+    remediation: 'Deshabilita TLS 1.1 en SCHANNEL\Protocols\TLS 1.1\Server poniendo Enabled=0 y DisabledByDefault=1, y reinicia. Crea la clave de forma explícita aunque no exista, para no dejarlo a la negociación por defecto.'
     ensControls: ["mp.com.2"]
     syntaxConfidence: high

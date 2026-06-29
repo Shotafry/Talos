@@ -3,7 +3,7 @@ checks:
     category: FS
     os: linux
     tier: deep
-    description: "/tmp debe montarse con nodev (no permitir dispositivos en /tmp)."
+    description: "/tmp es un directorio donde cualquiera puede escribir, así que no debería permitir ficheros de dispositivo. La opción de montaje nodev evita que un atacante coloque ahí un dispositivo falso para acceder a hardware o eludir controles."
     read: { type: exec, cmd: ["findmnt", "-no", "OPTIONS", "/tmp"] }
     comparator: regex
     expected: { good: "nodev" }
@@ -11,7 +11,7 @@ checks:
     severity: low
     criticality: BAJA
     requiresPrivilege: false
-    remediation: "Monta /tmp como particion separada con opciones nodev,nosuid,noexec."
+    remediation: "Monta /tmp como partición separada con las opciones nodev,nosuid,noexec en /etc/fstab, y vuelve a montarlo con `mount -o remount /tmp`. En sistemas con systemd, puedes activar tmp.mount."
     ensControls: ["op.exp.2"]
     syntaxConfidence: review
 
@@ -19,7 +19,7 @@ checks:
     category: FS
     os: linux
     tier: deep
-    description: "/tmp debe montarse con nosuid (no respetar bits SUID en /tmp)."
+    description: "Si un binario en /tmp conserva su bit SUID, un usuario sin privilegios podría ejecutarlo y ganar los del propietario. Montar /tmp con nosuid hace que el sistema ignore esos bits y cierra esa vía de escalada."
     read: { type: exec, cmd: ["findmnt", "-no", "OPTIONS", "/tmp"] }
     comparator: regex
     expected: { good: "nosuid" }
@@ -27,7 +27,7 @@ checks:
     severity: low
     criticality: BAJA
     requiresPrivilege: false
-    remediation: "Anade nosuid a las opciones de montaje de /tmp."
+    remediation: "Añade nosuid a las opciones de montaje de /tmp en /etc/fstab y vuelve a montarlo con `mount -o remount /tmp`."
     ensControls: ["op.exp.2", "op.acc.2"]
     syntaxConfidence: review
 
@@ -35,7 +35,7 @@ checks:
     category: FS
     os: linux
     tier: deep
-    description: "/tmp debe montarse con noexec (no ejecutar binarios desde /tmp)."
+    description: "/tmp es uno de los sitios donde el malware suele soltar y lanzar su carga, porque cualquiera puede escribir en él. Montarlo con noexec impide ejecutar binarios desde ahí y frena muchas cadenas de ataque."
     read: { type: exec, cmd: ["findmnt", "-no", "OPTIONS", "/tmp"] }
     comparator: regex
     expected: { good: "noexec" }
@@ -43,6 +43,54 @@ checks:
     severity: low
     criticality: BAJA
     requiresPrivilege: false
-    remediation: "Anade noexec a las opciones de montaje de /tmp."
+    remediation: "Añade noexec a las opciones de montaje de /tmp en /etc/fstab y vuelve a montarlo con `mount -o remount /tmp`. Comprueba antes que ningún instalador legítimo dependa de ejecutar desde /tmp."
     ensControls: ["op.exp.2"]
     syntaxConfidence: review
+
+  - id: FS-04
+    category: FS
+    os: linux
+    tier: deep
+    description: "/dev/shm es la zona de memoria compartida, escribible por cualquier proceso, y no tiene ningún motivo para contener ficheros de dispositivo. Montarla con nodev evita que se usen dispositivos falsos para sortear controles del sistema."
+    read: { type: exec, cmd: ["findmnt", "-no", "OPTIONS", "/dev/shm"] }
+    comparator: regex
+    expected: { good: "nodev" }
+    points: 1
+    severity: low
+    criticality: BAJA
+    requiresPrivilege: false
+    remediation: "Añade nodev,nosuid,noexec a las opciones de montaje de /dev/shm en /etc/fstab y vuelve a montarlo con `mount -o remount /dev/shm`."
+    ensControls: ["op.exp.2"]
+    syntaxConfidence: high
+
+  - id: FS-05
+    category: FS
+    os: linux
+    tier: deep
+    description: "Un binario con bit SUID colocado en /dev/shm permitiría a un usuario sin privilegios ejecutarlo con los del propietario. Montar la memoria compartida con nosuid hace que esos bits se ignoren y elimina esa vía de escalada."
+    read: { type: exec, cmd: ["findmnt", "-no", "OPTIONS", "/dev/shm"] }
+    comparator: regex
+    expected: { good: "nosuid" }
+    points: 1
+    severity: low
+    criticality: BAJA
+    requiresPrivilege: false
+    remediation: "Añade nosuid a las opciones de montaje de /dev/shm en /etc/fstab y vuelve a montarlo con `mount -o remount /dev/shm`."
+    ensControls: ["op.exp.2", "op.acc.2"]
+    syntaxConfidence: high
+
+  - id: FS-06
+    category: FS
+    os: linux
+    tier: deep
+    description: "La memoria compartida /dev/shm es otro lugar escribible que el malware aprovecha para ejecutar código sin tocar el disco. Montarla con noexec impide lanzar binarios desde ahí y corta esa técnica."
+    read: { type: exec, cmd: ["findmnt", "-no", "OPTIONS", "/dev/shm"] }
+    comparator: regex
+    expected: { good: "noexec" }
+    points: 1
+    severity: low
+    criticality: BAJA
+    requiresPrivilege: false
+    remediation: "Añade noexec a las opciones de montaje de /dev/shm en /etc/fstab y vuelve a montarlo con `mount -o remount /dev/shm`."
+    ensControls: ["op.exp.2"]
+    syntaxConfidence: high

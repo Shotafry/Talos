@@ -3,7 +3,7 @@ checks:
     category: SYSTEM
     os: windows
     tier: core
-    description: "El Control de cuentas de usuario (UAC) debe estar habilitado."
+    description: "El Control de cuentas de usuario (UAC) obliga a confirmar de forma explícita las acciones que requieren privilegios de administrador, lo que contiene la elevación silenciosa de malware y aplicaciones no autorizadas. Debe estar habilitado."
     read: { type: registry, path: 'HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System', name: 'EnableLUA' }
     comparator: eq
     expected: { good: "1" }
@@ -11,7 +11,7 @@ checks:
     severity: high
     criticality: ALTA
     requiresPrivilege: false
-    remediation: "Activa UAC: EnableLUA=1 en HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System y reinicia."
+    remediation: 'Activa UAC poniendo EnableLUA=1 en HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System y reinicia el equipo para que surta efecto. También puedes configurarlo por GPO en las directivas de seguridad locales.'
     ensControls: ["op.acc.4", "op.exp.2"]
     syntaxConfidence: high
 
@@ -19,7 +19,7 @@ checks:
     category: SYSTEM
     os: windows
     tier: core
-    description: "La ejecución automática (AutoRun/AutoPlay) debe estar desactivada en todas las unidades (vector de USB malicioso)."
+    description: "La ejecución automática lanza programas en cuanto se conecta un medio extraíble, lo que un USB malicioso aprovecha para ejecutar código sin intervención del usuario. Debe estar desactivada en todas las unidades."
     read: { type: registry, path: 'HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer', name: 'NoDriveTypeAutoRun' }
     comparator: eq
     expected: { good: "255" }
@@ -27,7 +27,7 @@ checks:
     severity: medium
     criticality: MEDIA
     requiresPrivilege: false
-    remediation: "Desactiva AutoRun en todas las unidades: NoDriveTypeAutoRun=255 (0xFF) en la política de Explorer."
+    remediation: 'Desactiva AutoRun en todas las unidades poniendo NoDriveTypeAutoRun=255 (0xFF) en HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer. El valor 255 cubre todos los tipos de unidad.'
     ensControls: ["op.exp.2"]
     syntaxConfidence: high
 
@@ -35,7 +35,7 @@ checks:
     category: SYSTEM
     os: windows
     tier: deep
-    description: "SmartScreen debería estar activo para filtrar aplicaciones y descargas maliciosas."
+    description: "SmartScreen comprueba la reputación de aplicaciones y descargas frente a la base de datos de Microsoft y bloquea las conocidas como maliciosas antes de que se ejecuten. Debería estar activo como capa de protección frente a phishing y malware."
     read: { type: registry, path: 'HKLM\SOFTWARE\Policies\Microsoft\Windows\System', name: 'EnableSmartScreen' }
     comparator: in
     expected: { good: ["1", "RequireAdmin", "Warn"], medium: ["absent"] }
@@ -43,6 +43,38 @@ checks:
     severity: low
     criticality: BAJA
     requiresPrivilege: false
-    remediation: "Activa SmartScreen por GPO (EnableSmartScreen=1, nivel RequireAdmin). Ausente queda al ajuste local del usuario."
+    remediation: 'Activa SmartScreen por GPO poniendo EnableSmartScreen=1 en HKLM\SOFTWARE\Policies\Microsoft\Windows\System, idealmente con el nivel RequireAdmin para que solicite aprobación de administrador. Si la clave no existe, el comportamiento queda a merced del ajuste local del usuario.'
     ensControls: ["op.exp.6"]
+    syntaxConfidence: high
+
+  - id: WIN-SYS-04
+    category: SYSTEM
+    os: windows
+    tier: deep
+    description: "El registro de bloques de script de PowerShell graba el código que se ejecuta, incluido el ofuscado tras descifrarlo, lo que resulta clave para detectar e investigar ataques que abusan de PowerShell. Debe estar activo para disponer de esas trazas forenses."
+    read: { type: registry, path: 'HKLM\SOFTWARE\Policies\Microsoft\Windows\PowerShell\ScriptBlockLogging', name: 'EnableScriptBlockLogging' }
+    comparator: eq
+    expected: { good: "1" }
+    points: 3
+    severity: medium
+    criticality: MEDIA
+    requiresPrivilege: false
+    remediation: 'Activa el registro de bloques de script por GPO (Plantillas administrativas > Componentes de Windows > Windows PowerShell > Activar el registro de bloques de scripts) o pon EnableScriptBlockLogging=1 en HKLM\SOFTWARE\Policies\Microsoft\Windows\PowerShell\ScriptBlockLogging. Si la clave no existe, no se registra nada.'
+    ensControls: ["op.exp.8"]
+    syntaxConfidence: high
+
+  - id: WIN-SYS-05
+    category: SYSTEM
+    os: windows
+    tier: deep
+    description: "La reproducción automática de medios extraíbles es una vía clásica de propagación de malware por USB, ya que ejecuta contenido sin que el usuario lo apruebe. Debe estar deshabilitada en todas las unidades mediante directiva."
+    read: { type: registry, path: 'HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer', name: 'NoDriveTypeAutoRun' }
+    comparator: eq
+    expected: { good: "255" }
+    points: 2
+    severity: medium
+    criticality: MEDIA
+    requiresPrivilege: false
+    remediation: 'Aplica la directiva poniendo NoDriveTypeAutoRun=0xFF (255) por GPO en Plantillas administrativas > Componentes de Windows > Directivas de reproducción automática > Desactivar reproducción automática, seleccionando todas las unidades.'
+    ensControls: ["mp.com.1", "op.exp.2"]
     syntaxConfidence: high
