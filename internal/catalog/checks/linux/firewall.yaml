@@ -22,7 +22,7 @@ checks:
     category: FIREWALL
     os: linux
     tier: core
-    description: "El cortafuegos firewalld debe estar en ejecucion."
+    description: "El cortafuegos firewalld debe estar en ejecución."
     read: { type: exec, cmd: ["firewall-cmd", "--state"] }
     comparator: eq
     expected: { good: "running" }

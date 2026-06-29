@@ -3,7 +3,7 @@ checks:
     category: SERVICES
     os: linux
     tier: deep
-    description: "avahi-daemon (descubrimiento mDNS) no deberia ejecutarse en un servidor."
+    description: "avahi-daemon (descubrimiento mDNS) no debería ejecutarse en un servidor."
     read: { type: systemd, unit: "avahi-daemon" }
     comparator: eq
     expected: { good: "inactive" }
@@ -22,7 +22,7 @@ checks:
     category: SERVICES
     os: linux
     tier: deep
-    description: "El servicio de impresion CUPS no deberia ejecutarse en un servidor."
+    description: "El servicio de impresion CUPS no debería ejecutarse en un servidor."
     read: { type: systemd, unit: "cups" }
     comparator: eq
     expected: { good: "inactive" }
@@ -41,7 +41,7 @@ checks:
     category: SERVICES
     os: linux
     tier: deep
-    description: "rpcbind expone servicios RPC; no deberia ejecutarse salvo que se use NFS."
+    description: "rpcbind expone servicios RPC; no debería ejecutarse salvo que se use NFS."
     read: { type: systemd, unit: "rpcbind" }
     comparator: eq
     expected: { good: "inactive" }

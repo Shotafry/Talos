@@ -34,10 +34,12 @@ que patrulla cada máquina y audita su seguridad.
   sin remediación automática: la remediación es un consejo en texto.
 - **Una nota clara.** Índice 0-100 ponderado; los "no aplica" no penalizan.
   Bandas rojo (<50) / amarillo (50-79) / verde (>=80), global y por categoría.
-- **Pack de vulnerabilidades por versión** (Linux): detecta paquetes sin
-  actualizar comparando contra la versión corregida **por distribución y release**
-  (sin falsos positivos por backport).
-- **Informe usable.** Consola, JSON o **HTML imprimible a PDF**.
+- **Repertorio propio de vulnerabilidades críticas por versión** (Linux): reglas
+  **escritas y verificadas a mano** contra los *security trackers* de Debian y
+  Ubuntu. Detectan paquetes sin parchear comparando con la versión corregida **por
+  distribución y release** (sin falsos positivos por backport): PwnKit, Looney
+  Tunables, regreSSHion, sudoedit, polkit, glibc iconv...
+- **Informe usable.** Consola **con color y medidor**, JSON o **HTML imprimible a PDF**.
 
 ---
 
@@ -52,6 +54,28 @@ flowchart LR
 ```
 
 Todo ocurre en la máquina. Nada sale a la red.
+
+---
+
+## El catálogo: qué comprueba
+
+**106 comprobaciones** (74 Linux + 32 Windows), escritas como **datos** (fichas
+YAML): cada una con su severidad, peso, criticidad, controles ENS y cómo remediarla.
+
+- **Linux** - 12 categorías: SSH, KERNEL, FIREWALL, USERS, PORTS, UPDATES, MAC
+  (SELinux/AppArmor), AUDIT, FS, SERVICES, TIME y VULN.
+- **Windows** - 11 categorías: FIREWALL, SMB, CREDS, DEFENDER, SYSTEM, USERS, RDP,
+  SERVICES, AUDIT, NAMERES y TLS (solo auditoría; en Windows nunca remedia).
+
+Dentro de VULN va un **repertorio propio de reglas de vulnerabilidades críticas
+por versión**, verificadas a mano contra los *security trackers* de Debian y Ubuntu:
+escaladas locales y RCE como PwnKit, Looney Tunables, regreSSHion, sudoedit, polkit
+o glibc iconv, detectadas por la versión del paquete instalada frente a la corregida
+**por distribución y release** (sin falsos positivos por backport).
+
+Los **perfiles** deciden cuántas se ejecutan: `core` (rápido, lo esencial) es el
+de por defecto; **`--profile full`** corre el catálogo completo, incluido ese pack
+de vulnerabilidades.
 
 ---
 
@@ -77,12 +101,14 @@ curl -fL -o talos https://github.com/Shotafry/Talos/releases/latest/download/tal
 curl -fL -o SHA256SUMS https://github.com/Shotafry/Talos/releases/latest/download/SHA256SUMS
 sha256sum --ignore-missing -c SHA256SUMS        # debe decir: talos-linux-amd64: OK
 
-# 3. dale permiso de ejecución y, opcional, ponlo en el PATH
+# 3. dale permiso de ejecución (es un BINARIO, no un script: no lo renombres a .sh ni uses 'bash')
 chmod +x talos
-sudo mv talos /usr/local/bin/talos
 
-# 4. ejecútalo
-talos audit
+# 4. ejecútalo. Si no lo pones en el PATH, llámalo con ./ delante
+./talos audit
+
+# (opcional) para tenerlo como 'talos' en todo el sistema:
+sudo mv talos /usr/local/bin/talos && talos audit
 ```
 
 **Windows** (PowerShell; `amd64` para la mayoría de equipos, `arm64` para ARM):
@@ -130,7 +156,7 @@ Una vez tienes el binario:
 ```bash
 talos audit                              # informe en consola, aquí y ahora
 talos audit --format html -o talos.html  # informe imprimible a PDF (ábrelo e imprime)
-talos audit --profile deep               # auditoría a fondo (+ pack de vulns por versión)
+talos audit --profile full               # análisis completo (+ repertorio de vulns por versión)
 talos --help                             # todos los comandos y flags
 ```
 

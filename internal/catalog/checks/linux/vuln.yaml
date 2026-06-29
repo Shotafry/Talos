@@ -1,6 +1,6 @@
 checks:
-  # Pack por CONDICION de explotabilidad (NO por version: eso lo cubren Trivy/OSV/UPD-01).
-  # Detecta mitigaciones apagadas o features peligrosas que habilitan clases de exploits criticos.
+  # Pack por CONDICION de explotabilidad (NO por versión: eso lo cubren Trivy/OSV/UPD-01).
+  # Detecta mitigaciones apagadas o features peligrosas que habilitan clases de exploits críticos.
   - id: VULN-01
     category: VULN
     os: linux
@@ -69,7 +69,7 @@ checks:
     category: VULN
     os: linux
     tier: core
-    description: "Las reglas sudo con NOPASSWD permiten escalar a root sin contrasena (escalada trivial si se roba una sesion)."
+    description: "Las reglas sudo con NOPASSWD permiten escalar a root sin contraseña (escalada trivial si se roba una sesión)."
     read: { type: file, path: "/etc/sudoers" }
     comparator: nregex
     expected: { good: "NOPASSWD" }

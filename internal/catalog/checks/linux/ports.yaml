@@ -35,7 +35,7 @@ checks:
     category: PORTS
     os: linux
     tier: deep
-    description: "NFS (2049/tcp) no deberia exponerse salvo necesidad y con control de acceso."
+    description: "NFS (2049/tcp) no debería exponerse salvo necesidad y con control de acceso."
     read: { type: ss, key: "2049" }
     comparator: exists
     expected: { good: false }
@@ -67,7 +67,7 @@ checks:
     category: PORTS
     os: linux
     tier: deep
-    description: "Redis (6379) no debe estar a la escucha en red sin autenticacion."
+    description: "Redis (6379) no debe estar a la escucha en red sin autenticación."
     read: { type: ss, key: "6379" }
     comparator: exists
     expected: { good: false }
@@ -75,7 +75,7 @@ checks:
     severity: high
     criticality: ALTA
     requiresPrivilege: false
-    remediation: "Vincula Redis a 127.0.0.1 y exige contrasena; nunca expuesto sin auth."
+    remediation: "Vincula Redis a 127.0.0.1 y exige contraseña; nunca expuesto sin auth."
     ensControls: ["mp.com.4", "op.exp.2"]
     syntaxConfidence: high
 
@@ -83,7 +83,7 @@ checks:
     category: PORTS
     os: linux
     tier: deep
-    description: "Elasticsearch (9200) no debe exponerse sin autenticacion."
+    description: "Elasticsearch (9200) no debe exponerse sin autenticación."
     read: { type: ss, key: "9200" }
     comparator: exists
     expected: { good: false }
@@ -99,7 +99,7 @@ checks:
     category: PORTS
     os: linux
     tier: deep
-    description: "MongoDB (27017) no debe exponerse sin autenticacion."
+    description: "MongoDB (27017) no debe exponerse sin autenticación."
     read: { type: ss, key: "27017" }
     comparator: exists
     expected: { good: false }
@@ -107,7 +107,7 @@ checks:
     severity: high
     criticality: ALTA
     requiresPrivilege: false
-    remediation: "Vincula MongoDB a 127.0.0.1/red interna y activa autenticacion."
+    remediation: "Vincula MongoDB a 127.0.0.1/red interna y activa autenticación."
     ensControls: ["mp.com.4", "op.exp.2"]
     syntaxConfidence: high
 
@@ -131,7 +131,7 @@ checks:
     category: PORTS
     os: linux
     tier: deep
-    description: "Los servicios de base de datos no deben escuchar en 0.0.0.0/[::] (exposicion publica)."
+    description: "Los servicios de base de datos no deben escuchar en 0.0.0.0/[::] (exposición pública)."
     read: { type: ss }
     comparator: eq
     expected: { good: "none" }

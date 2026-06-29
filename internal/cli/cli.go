@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Shotafry/talos/internal/ansi"
 	"github.com/Shotafry/talos/internal/catalog"
 	"github.com/Shotafry/talos/internal/engine"
 	"github.com/Shotafry/talos/internal/facts"
@@ -65,6 +66,7 @@ func runAudit(cmd string, args []string) int {
 	verbose := fs.Bool("verbose", false, "muestra cada check")
 	catDir := fs.String("catalog", "", "directorio de catalogo externo")
 	timeout := fs.Int("timeout", 5000, "timeout por probe (ms)")
+	colorMode := fs.String("color", "auto", "color de salida: auto|always|never")
 	server := fs.String("server", os.Getenv("TALOS_SERVER"), "(push) URL base de Argos")
 	token := fs.String("token", os.Getenv("TALOS_TOKEN"), "(push) token de agente")
 	verFlag := fs.Bool("version", false, "imprime version y sale")
@@ -92,8 +94,9 @@ func runAudit(cmd string, args []string) int {
 
 	checks := selectChecks(cat.Checks, hostFacts.OS, *profile, parseCSVSet(*only))
 
+	useColor := wantColor(*colorMode, *output)
 	if !*quiet && resolvedFormat(*format) == "text" && *output == "" {
-		printBanner(cat.Meta.Version, osFamily(hostFacts.OS))
+		printBanner(cat.Meta.Version, osFamily(hostFacts.OS), useColor)
 	}
 
 	start := time.Now()
@@ -154,7 +157,7 @@ func runAudit(cmd string, args []string) int {
 	case "html":
 		_ = report.WriteHTML(w, rep)
 	default:
-		report.WriteConsole(w, rep, *verbose)
+		report.WriteConsole(w, rep, *verbose, useColor)
 	}
 	return exitCode(verdicts)
 }
@@ -334,32 +337,62 @@ func resolvedFormat(f string) string {
 	}
 }
 
-func printBanner(catVersion, osFam string) {
-	fmt.Print(asciiBadge)
-	fmt.Printf("  Talos by Argos . hardening + vigilancia (solo lectura)\n  v%s . catalogo %s . %s\n\n", version, catVersion, osFam)
+func printBanner(catVersion, osFam string, color bool) {
+	fmt.Print(ansi.P(color, ansi.Bronze, asciiBadge))
+	fmt.Printf("  %s   %s\n",
+		ansi.P(color, ansi.Cyan+ansi.Bold, "BY ARGOS"),
+		ansi.P(color, ansi.Bold, "Hardening y vigilancia de sistemas"))
+	fmt.Printf("  %s\n\n", ansi.P(color, ansi.Dim,
+		fmt.Sprintf("auditoría de bastionado · solo lectura · v%s · catálogo %s · %s", version, catVersion, osFam)))
+}
+
+// wantColor decide si emitir color: never/always lo fuerzan; auto = a stdout, TTY y sin NO_COLOR.
+func wantColor(mode, output string) bool {
+	switch mode {
+	case "always":
+		return true
+	case "never":
+		return false
+	default:
+		if output != "" || os.Getenv("NO_COLOR") != "" {
+			return false
+		}
+		return isCharDevice(os.Stdout)
+	}
+}
+
+func isCharDevice(f *os.File) bool {
+	fi, err := f.Stat()
+	return err == nil && fi.Mode()&os.ModeCharDevice != 0
 }
 
 func printVersion() { fmt.Printf("talos %s\n", version) }
 
 func printHelp() {
-	fmt.Print(`TALOS by argos - auditoria de bastionado (solo lectura)
+	fmt.Print(`TALOS by Argos - auditoría de bastionado (solo lectura)
 
 Uso:
   talos audit [flags]     audita el host y muestra el informe (por defecto)
-  talos catalog list      lista los checks del catalogo
-  talos catalog lint      valida el catalogo
-  talos update            actualiza el catalogo desde el repo publico (standalone)
-  talos version           version del binario
+  talos catalog list      lista las comprobaciones del catálogo
+  talos catalog lint      valida el catálogo
+  talos update            actualiza el catálogo desde el repo público (standalone)
+  talos version           versión del binario
+
+Perfiles (--profile, por defecto 'core'):
+  core       rápido: las comprobaciones esenciales
+  full       completo: TODO el catálogo, incluido el pack de vulnerabilidades por versión
+  deep       como 'full'
+  critical   solo las comprobaciones de severidad alta/crítica
 
 Flags de audit:
-  --profile core|deep|full|critical   (default core)
-  --only <cat,cat>      limita a categorias
-  --format json|html|text  (default text; html = informe imprimible a PDF)
+  --only <cat,cat>      limita a categorías (p.ej. SSH,KERNEL)
+  --format json|html|text  (por defecto text; html = informe imprimible a PDF)
   --output, -o <file>   escribe a fichero
+  --color auto|always|never  (por defecto auto: color solo si la salida es un terminal)
   --quiet, -q           sin banner
-  --verbose, -v         detalle por check
-  --catalog <dir>       catalogo externo
-  --timeout <ms>        timeout por probe (default 5000)
+  --verbose, -v         detalle por comprobación
+  --catalog <dir>       catálogo externo
+  --timeout <ms>        timeout por probe (por defecto 5000)
 `)
 }
 

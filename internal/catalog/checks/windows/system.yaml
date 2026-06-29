@@ -19,7 +19,7 @@ checks:
     category: SYSTEM
     os: windows
     tier: core
-    description: "La ejecucion automatica (AutoRun/AutoPlay) debe estar desactivada en todas las unidades (vector de USB malicioso)."
+    description: "La ejecución automática (AutoRun/AutoPlay) debe estar desactivada en todas las unidades (vector de USB malicioso)."
     read: { type: registry, path: 'HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer', name: 'NoDriveTypeAutoRun' }
     comparator: eq
     expected: { good: "255" }
@@ -27,7 +27,7 @@ checks:
     severity: medium
     criticality: MEDIA
     requiresPrivilege: false
-    remediation: "Desactiva AutoRun en todas las unidades: NoDriveTypeAutoRun=255 (0xFF) en la politica de Explorer."
+    remediation: "Desactiva AutoRun en todas las unidades: NoDriveTypeAutoRun=255 (0xFF) en la política de Explorer."
     ensControls: ["op.exp.2"]
     syntaxConfidence: high
 
@@ -35,7 +35,7 @@ checks:
     category: SYSTEM
     os: windows
     tier: deep
-    description: "SmartScreen deberia estar activo para filtrar aplicaciones y descargas maliciosas."
+    description: "SmartScreen debería estar activo para filtrar aplicaciones y descargas maliciosas."
     read: { type: registry, path: 'HKLM\SOFTWARE\Policies\Microsoft\Windows\System', name: 'EnableSmartScreen' }
     comparator: in
     expected: { good: ["1", "RequireAdmin", "Warn"], medium: ["absent"] }

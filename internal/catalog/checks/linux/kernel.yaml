@@ -3,7 +3,7 @@ checks:
     category: KERNEL
     os: linux
     tier: core
-    description: "ASLR (aleatorizacion del espacio de direcciones) al maximo dificulta la explotacion de memoria."
+    description: "ASLR (aleatorización del espacio de direcciones) al máximo dificulta la explotacion de memoria."
     read: { type: sysctl, key: "kernel.randomize_va_space" }
     comparator: eq
     expected: { good: "2", medium: "1" }
@@ -35,7 +35,7 @@ checks:
     category: KERNEL
     os: linux
     tier: core
-    description: "No aceptar redirecciones ICMP evita reenrutado malicioso del trafico."
+    description: "No aceptar redirecciones ICMP evita reenrutado malicioso del tráfico."
     read: { type: sysctl, key: "net.ipv4.conf.all.accept_redirects" }
     comparator: eq
     expected: { good: "0" }

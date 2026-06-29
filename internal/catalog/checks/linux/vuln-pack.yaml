@@ -1,9 +1,9 @@
 checks:
   # Pack "joyas por VERSION de paquete corregida" (tier deep = musculo del modo standalone
-  # OFFLINE: en nativo NO aporta sobre Trivy/OSV, que ya cubren CVEs por version). Detecta una
-  # instalacion SIN actualizar comparando la version instalada con la PRIMERA version corregida
-  # POR DISTRO+RELEASE (no upstream): los distros parchean por backport sin subir la version
-  # upstream, asi que un fixed-version upstream daria FALSOS POSITIVOS masivos (leccion CLAUDE
+  # OFFLINE: en nativo NO aporta sobre Trivy/OSV, que ya cubren CVEs por versión). Detecta una
+  # instalacion SIN actualizar comparando la versión instalada con la PRIMERA versión corregida
+  # POR DISTRO+RELEASE (no upstream): los distros parchean por backport sin subir la versión
+  # upstream, así que un fixed-version upstream daría FALSOS POSITIVOS masivos (leccion CLAUDE
   # 9.14). Solo se curan CVEs donde la release SALIO vulnerable y se corrigio con +debXuY/ubuntuN
   # (las CVEs antiguas que ya salieron corregidas de fabrica las cubre Trivy/OSV, no este pack).
   # Versiones-fix verificadas contra Debian Security Tracker + Ubuntu CVE Tracker (2026-06-25).
@@ -35,7 +35,7 @@ checks:
     category: VULN
     os: linux
     tier: deep
-    description: "sudoedit (CVE-2023-22809): edicion de ficheros arbitrarios via sudo sin actualizar en Debian 11."
+    description: "sudoedit (CVE-2023-22809): edicion de ficheros arbitrarios vía sudo sin actualizar en Debian 11."
     read: { type: pkgver, key: "sudo" }
     comparator: vge
     expected: { good: "1.9.5p2-3+deb11u1" }
@@ -237,7 +237,7 @@ checks:
     category: VULN
     os: linux
     tier: deep
-    description: "sudoedit (CVE-2023-22809): edicion de ficheros arbitrarios via sudo sin actualizar en Ubuntu 22.04."
+    description: "sudoedit (CVE-2023-22809): edicion de ficheros arbitrarios vía sudo sin actualizar en Ubuntu 22.04."
     read: { type: pkgver, key: "sudo" }
     comparator: vge
     expected: { good: "1.9.9-1ubuntu2.2" }

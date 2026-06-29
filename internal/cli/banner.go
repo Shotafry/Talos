@@ -4,7 +4,7 @@ package cli
 // vigilante que hacia la ronda. Se imprime al inicio de una auditoria en modo texto.
 const asciiBadge = `
    ████████  █████  ██      ██████  ███████
-      ██    ██   ██ ██     ██    ██ ██         (o)
+      ██    ██   ██ ██     ██    ██ ██
       ██    ███████ ██     ██    ██ ███████
       ██    ██   ██ ██     ██    ██      ██
       ██    ██   ██ ██████  ██████  ███████

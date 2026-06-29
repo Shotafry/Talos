@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -62,6 +63,10 @@ func Evaluate(check catalog.Check, raw probe.RawRead, env Env) Verdict {
 	}
 	if check.RequiresPrivilege && !env.IsRoot {
 		v.Status, v.Reason = "NA", "requiere privilegios de root (ejecuta con sudo)"
+		return v
+	}
+	if errors.Is(raw.Err, probe.ErrPkgAbsent) {
+		v.Status, v.Reason = "NA", "no aplica: el paquete no esta instalado (la vulnerabilidad no afecta)"
 		return v
 	}
 	if raw.Err != nil {
@@ -223,12 +228,12 @@ func applicabilityHolds(a *catalog.Applicability, f Facts) (bool, string) {
 			}
 		}
 		if !ok {
-			return false, "no aplica: " + describeOne(a.AnyOf[0])
+			return false, "no aplica: " + describeOne(a.AnyOf[0], f)
 		}
 	}
 	for _, p := range a.AllOf {
 		if !predHolds(p, f) {
-			return false, "no aplica: " + describeOne(p)
+			return false, "no aplica: " + describeOne(p, f)
 		}
 	}
 	if a.Not != nil && predHolds(*a.Not, f) {
@@ -256,18 +261,25 @@ func predHolds(p catalog.Predicate, f Facts) bool {
 	}
 }
 
-func describeOne(p catalog.Predicate) string {
+func describeOne(p catalog.Predicate, f Facts) string {
+	host := strings.TrimSpace(f.OS + " " + f.DistroRelease)
 	switch {
 	case p.Service != "":
-		return "servicio " + p.Service + " no instalado"
+		return "el servicio " + p.Service + " no esta instalado"
 	case p.Package != "":
-		return "paquete " + p.Package + " no instalado"
+		return "el paquete " + p.Package + " no esta instalado"
 	case p.File != "":
-		return "fichero " + p.File + " ausente"
+		return "el fichero " + p.File + " no existe"
 	case p.OS != "":
-		return "SO distinto de " + p.OS
+		if host != "" {
+			return "regla solo para " + p.OS + " (este host: " + host + ")"
+		}
+		return "regla solo para " + p.OS
 	case p.Release != "":
-		return "version del SO distinta de " + p.Release
+		if host != "" {
+			return "regla solo para la release " + p.Release + " del SO (este host: " + host + ")"
+		}
+		return "regla solo para la release " + p.Release + " del SO"
 	case p.KernelRange != "":
 		return "kernel fuera del rango " + p.KernelRange
 	default:

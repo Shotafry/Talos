@@ -3,7 +3,7 @@ checks:
     category: USERS
     os: windows
     tier: core
-    description: "La longitud minima de contrasena local debe ser robusta (>= 14)."
+    description: "La longitud minima de contraseña local debe ser robusta (>= 14)."
     read: { type: netaccounts, key: minPwLen }
     comparator: ge
     expected: { good: "14", medium: "8" }
@@ -11,7 +11,7 @@ checks:
     severity: high
     criticality: ALTA
     requiresPrivilege: false
-    remediation: "Establece una longitud minima de contrasena >= 14 (net accounts /minpwlen:14 o por GPO/Directiva de seguridad local)."
+    remediation: "Establece una longitud minima de contraseña >= 14 (net accounts /minpwlen:14 o por GPO/Directiva de seguridad local)."
     ensControls: ["op.acc.5", "op.acc.6"]
     syntaxConfidence: high
 
@@ -19,7 +19,7 @@ checks:
     category: USERS
     os: windows
     tier: deep
-    description: "Las contrasenas locales deben caducar (caducidad maxima acotada, no 'nunca')."
+    description: "Las contraseñas locales deben caducar (caducidad maxima acotada, no 'nunca')."
     read: { type: netaccounts, key: maxPwAge }
     comparator: le
     expected: { good: "365" }
@@ -27,7 +27,7 @@ checks:
     severity: low
     criticality: BAJA
     requiresPrivilege: false
-    remediation: "Configura una caducidad maxima de contrasena (p.ej. net accounts /maxpwage:365). 'Nunca caduca' se considera inseguro."
+    remediation: "Configura una caducidad maxima de contraseña (p.ej. net accounts /maxpwage:365). 'Nunca caduca' se considera inseguro."
     ensControls: ["op.acc.5"]
     syntaxConfidence: high
 

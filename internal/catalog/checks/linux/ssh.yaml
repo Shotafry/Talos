@@ -3,7 +3,7 @@ checks:
     category: SSH
     os: linux
     tier: core
-    description: "El demonio SSH debe estar activo si es el medio de administracion."
+    description: "El demonio SSH debe estar activo si es el medio de administración."
     read: { type: systemd, unit: "sshd" }
     comparator: eq
     expected: { good: "active" }
@@ -38,7 +38,7 @@ checks:
         - { service: ssh }
         - { file: "/etc/ssh/sshd_config" }
     requiresPrivilege: true
-    remediation: "En /etc/ssh/sshd_config establece PermitRootLogin no y recarga con systemctl reload ssh. Asegura un usuario con sudo antes de cerrar la sesion."
+    remediation: "En /etc/ssh/sshd_config establece PermitRootLogin no y recarga con systemctl reload ssh. Asegura un usuario con sudo antes de cerrar la sesión."
     ensControls: ["op.acc.6", "op.exp.2"]
     syntaxConfidence: high
 
@@ -46,7 +46,7 @@ checks:
     category: SSH
     os: linux
     tier: core
-    description: "La autenticacion por contrasena debe estar desactivada (solo clave publica) para frenar la fuerza bruta."
+    description: "La autenticación por contraseña debe estar desactivada (solo clave pública) para frenar la fuerza bruta."
     read: { type: sshd_t, key: passwordauthentication }
     comparator: eq
     expected: { good: "no" }
@@ -67,7 +67,7 @@ checks:
     category: SSH
     os: linux
     tier: deep
-    description: "La autenticacion por clave publica debe estar habilitada."
+    description: "La autenticación por clave pública debe estar habilitada."
     read: { type: sshd_t, key: pubkeyauthentication }
     comparator: eq
     expected: { good: "yes" }
@@ -88,7 +88,7 @@ checks:
     category: SSH
     os: linux
     tier: core
-    description: "No se deben permitir contrasenas vacias en SSH."
+    description: "No se deben permitir contraseñas vacías en SSH."
     read: { type: sshd_t, key: permitemptypasswords }
     comparator: eq
     expected: { good: "no" }
@@ -109,7 +109,7 @@ checks:
     category: SSH
     os: linux
     tier: core
-    description: "Limita los intentos de autenticacion por conexion (anti fuerza bruta)."
+    description: "Limita los intentos de autenticación por conexión (anti fuerza bruta)."
     read: { type: sshd_t, key: maxauthtries }
     comparator: le
     expected: { good: "3", medium: "6" }
@@ -130,7 +130,7 @@ checks:
     category: SSH
     os: linux
     tier: deep
-    description: "Desactiva el reenvio X11 salvo necesidad grafica."
+    description: "Desactiva el reenvío X11 salvo necesidad grafica."
     read: { type: sshd_t, key: x11forwarding }
     comparator: eq
     expected: { good: "no" }
@@ -151,7 +151,7 @@ checks:
     category: SSH
     os: linux
     tier: deep
-    description: "Tiempo maximo de autenticacion acotado (limita conexiones colgadas sin autenticar)."
+    description: "Tiempo máximo de autenticación acotado (limita conexiones colgadas sin autenticar)."
     read: { type: sshd_t, key: logingracetime }
     comparator: le
     expected: { good: "60", medium: "120" }
@@ -172,7 +172,7 @@ checks:
     category: SSH
     os: linux
     tier: deep
-    description: "Los cifrados (Ciphers) no deben incluir algoritmos debiles (CBC, arcfour, 3DES)."
+    description: "Los cifrados (Ciphers) no deben incluir algoritmos débiles (CBC, arcfour, 3DES)."
     read: { type: sshd_t, key: ciphers }
     comparator: nregex
     expected: { good: "(cbc|arcfour|3des|blowfish|cast128)" }
@@ -193,7 +193,7 @@ checks:
     category: SSH
     os: linux
     tier: deep
-    description: "Los MAC no deben incluir algoritmos debiles (MD5, SHA1 truncado)."
+    description: "Los MAC no deben incluir algoritmos débiles (MD5, SHA1 truncado)."
     read: { type: sshd_t, key: macs }
     comparator: nregex
     expected: { good: "(hmac-md5|hmac-sha1-96)" }
@@ -214,7 +214,7 @@ checks:
     category: SSH
     os: linux
     tier: deep
-    description: "Los algoritmos de intercambio de claves (KEX) no deben incluir SHA1 ni grupos DH debiles."
+    description: "Los algoritmos de intercambio de claves (KEX) no deben incluir SHA1 ni grupos DH débiles."
     read: { type: sshd_t, key: kexalgorithms }
     comparator: nregex
     expected: { good: "(group1-sha1|group-exchange-sha1|diffie-hellman-group14-sha1|gss-)" }
@@ -256,7 +256,7 @@ checks:
     category: SSH
     os: linux
     tier: deep
-    description: "SSH debe integrarse con PAM (politicas de bloqueo, limites, MFA)."
+    description: "SSH debe integrarse con PAM (políticas de bloqueo, limites, MFA)."
     read: { type: sshd_t, key: usepam }
     comparator: eq
     expected: { good: "yes" }

@@ -3,7 +3,7 @@ checks:
     category: DEFENDER
     os: windows
     tier: core
-    description: "La proteccion en tiempo real de Microsoft Defender debe estar activa."
+    description: "La protección en tiempo real de Microsoft Defender debe estar activa."
     read: { type: cmdlet, cmd: ["(Get-MpComputerStatus).RealTimeProtectionEnabled"] }
     comparator: eq
     expected: { good: "true" }
@@ -11,7 +11,7 @@ checks:
     severity: high
     criticality: ALTA
     requiresPrivilege: false
-    remediation: "Activa la proteccion en tiempo real de Defender (o verifica que otro antivirus la cubre). Set-MpPreference -DisableRealtimeMonitoring $false."
+    remediation: "Activa la protección en tiempo real de Defender (o verifica que otro antivirus la cubre). Set-MpPreference -DisableRealtimeMonitoring $false."
     ensControls: ["op.exp.6", "op.exp.3"]
     syntaxConfidence: high
 
@@ -19,7 +19,7 @@ checks:
     category: DEFENDER
     os: windows
     tier: core
-    description: "La proteccion contra manipulaciones (Tamper Protection) debe estar activa para que el malware no apague Defender."
+    description: "La protección contra manipulaciones (Tamper Protection) debe estar activa para que el malware no apague Defender."
     read: { type: cmdlet, cmd: ["(Get-MpComputerStatus).IsTamperProtected"] }
     comparator: eq
     expected: { good: "true" }
@@ -27,7 +27,7 @@ checks:
     severity: medium
     criticality: MEDIA
     requiresPrivilege: false
-    remediation: "Activa la proteccion contra manipulaciones desde Seguridad de Windows > Proteccion antivirus."
+    remediation: "Activa la protección contra manipulaciones desde Seguridad de Windows > Proteccion antivirus."
     ensControls: ["op.exp.6", "op.exp.2"]
     syntaxConfidence: high
 
@@ -35,7 +35,7 @@ checks:
     category: DEFENDER
     os: windows
     tier: core
-    description: "La proteccion de red (Network Protection) deberia bloquear conexiones a dominios maliciosos."
+    description: "La protección de red (Network Protection) debería bloquear conexiones a dominios maliciosos."
     read: { type: cmdlet, cmd: ["(Get-MpPreference).EnableNetworkProtection"] }
     comparator: eq
     expected: { good: "1", medium: "2" }
@@ -43,7 +43,7 @@ checks:
     severity: medium
     criticality: MEDIA
     requiresPrivilege: false
-    remediation: "Activa la proteccion de red en modo bloqueo: Set-MpPreference -EnableNetworkProtection Enabled (1=bloqueo, 2=auditoria)."
+    remediation: "Activa la protección de red en modo bloqueo: Set-MpPreference -EnableNetworkProtection Enabled (1=bloqueo, 2=auditoria)."
     ensControls: ["op.exp.6", "mp.com.1"]
     syntaxConfidence: high
 
@@ -51,7 +51,7 @@ checks:
     category: DEFENDER
     os: windows
     tier: deep
-    description: "El acceso controlado a carpetas (anti-ransomware) deberia estar activo."
+    description: "El acceso controlado a carpetas (anti-ransomware) debería estar activo."
     read: { type: cmdlet, cmd: ["(Get-MpPreference).EnableControlledFolderAccess"] }
     comparator: eq
     expected: { good: "1", medium: "2" }
@@ -67,7 +67,7 @@ checks:
     category: DEFENDER
     os: windows
     tier: deep
-    description: "El envio de muestras a la nube (MAPS/cloud) deberia estar configurado para mejorar la deteccion."
+    description: "El envio de muestras a la nube (MAPS/cloud) debería estar configurado para mejorar la detección."
     read: { type: cmdlet, cmd: ["(Get-MpPreference).MAPSReporting"] }
     comparator: eq
     expected: { good: "2", medium: "1" }
@@ -83,7 +83,7 @@ checks:
     category: DEFENDER
     os: windows
     tier: core
-    description: "Deberia haber reglas de reduccion de superficie de ataque (ASR) configuradas."
+    description: "Deberia haber reglas de reducción de superficie de ataque (ASR) configuradas."
     read: { type: cmdlet, cmd: ["@((Get-MpPreference).AttackSurfaceReductionRules_Ids | Where-Object {$_}).Count"] }
     comparator: ge
     expected: { good: "1" }

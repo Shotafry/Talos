@@ -35,7 +35,7 @@ checks:
     category: CREDS
     os: windows
     tier: core
-    description: "El acceso anonimo (sesion nula) debe estar restringido para no enumerar cuentas y recursos."
+    description: "El acceso anónimo (sesión nula) debe estar restringido para no enumerar cuentas y recursos."
     read: { type: registry, path: 'HKLM\SYSTEM\CurrentControlSet\Control\Lsa', name: 'RestrictAnonymous' }
     comparator: eq
     expected: { good: "1" }
@@ -51,7 +51,7 @@ checks:
     category: CREDS
     os: windows
     tier: deep
-    description: "Credential Guard deberia estar en ejecucion para aislar secretos LSA por virtualizacion."
+    description: "Credential Guard debería estar en ejecución para aislar secretos LSA por virtualizacion."
     read: { type: cmdlet, cmd: ["[int]((Get-CimInstance -Namespace root\\Microsoft\\Windows\\DeviceGuard -ClassName Win32_DeviceGuard).SecurityServicesRunning -contains 1)"] }
     comparator: eq
     expected: { good: "1" }
@@ -67,7 +67,7 @@ checks:
     category: CREDS
     os: windows
     tier: deep
-    description: "La seguridad basada en virtualizacion (VBS) deberia estar en ejecucion (base de Credential Guard/HVCI)."
+    description: "La seguridad basada en virtualizacion (VBS) debería estar en ejecución (base de Credential Guard/HVCI)."
     read: { type: cmdlet, cmd: ["(Get-CimInstance -Namespace root\\Microsoft\\Windows\\DeviceGuard -ClassName Win32_DeviceGuard).VirtualizationBasedSecurityStatus"] }
     comparator: eq
     expected: { good: "2" }

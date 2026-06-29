@@ -19,7 +19,7 @@ checks:
     category: AUDIT
     os: windows
     tier: deep
-    description: "Los eventos de creacion de procesos deben incluir la linea de comandos (caza de ejecucion sospechosa)."
+    description: "Los eventos de creacion de procesos deben incluir la linea de comandos (caza de ejecución sospechosa)."
     read: { type: registry, path: 'HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System\Audit', name: 'ProcessCreationIncludeCmdLine_Enabled' }
     comparator: eq
     expected: { good: "1" }

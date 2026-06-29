@@ -51,7 +51,7 @@ checks:
     category: SMB
     os: windows
     tier: core
-    description: "Los inicios de sesion de invitado no seguros en SMB deben estar prohibidos (evita conexiones sin autenticar a recursos)."
+    description: "Los inicios de sesión de invitado no seguros en SMB deben estar prohibidos (evita conexiones sin autenticar a recursos)."
     read: { type: registry, path: 'HKLM\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters', name: 'AllowInsecureGuestAuth' }
     comparator: in
     expected: { good: ["absent", "0"] }
