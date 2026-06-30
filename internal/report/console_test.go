@@ -111,3 +111,157 @@ func runeIndex(s, sub string) int {
 	}
 	return len([]rune(s[:b]))
 }
+
+// findingsReport cubre todos los carriles del informe: un fallo crítico (alta), fallos medio/bajo
+// y un aviso (van a "Otros hallazgos"), un PASS y un NA (no van), y una categoría todo-N/A (n/d).
+func findingsReport() Report {
+	return Report{
+		Index: 50, Band: "amarillo", Profile: "full",
+		Host:        Host{Hostname: "srv-1", OS: "debian", Kernel: "6.1.0"},
+		GeneratedAt: "2026-06-30T08:00:00Z",
+		Counts:      score.Counts{Pass: 2, Warn: 1, Fail: 3, NA: 1},
+		Categories: []score.CategoryScore{
+			{Category: "SSH", Index: 0, Band: "rojo", Counts: score.Counts{Fail: 1}},
+			{Category: "AUDIT", Index: 0, Band: "n/d", Counts: score.Counts{NA: 1}},
+		},
+		CriticalVulns: []CriticalVuln{
+			{CheckID: "SSH-02", Title: "Auth por contraseña", Severity: "high", Category: "SSH", Remediation: "PasswordAuthentication no"},
+		},
+		Results: []Result{
+			{CheckID: "SSH-02", Status: "FAIL", Severity: "high", Category: "SSH", Description: "Auth por contraseña", Remediation: "PasswordAuthentication no"},
+			{CheckID: "FS-03", Status: "FAIL", Severity: "medium", Category: "FS", Description: "umask laxo", Remediation: "Pon umask 027"},
+			{CheckID: "KRN-09", Status: "FAIL", Severity: "low", Category: "KERNEL", Description: "dmesg abierto", Remediation: "kernel.dmesg_restrict=1"},
+			{CheckID: "TIME-01", Status: "WARN", Severity: "medium", Category: "TIME", Description: "NTP sin fijar", Remediation: "Activa NTP"},
+			{CheckID: "OK-01", Status: "PASS", Severity: "low", Category: "SSH", Description: "todo bien"},
+			{CheckID: "NA-01", Status: "NA", Severity: "low", Category: "AUDIT", Description: "no medible", Reason: "no aplica"},
+		},
+	}
+}
+
+// "Otros hallazgos" lista los fallos medio/bajo y los avisos (no los críticos, ni PASS, ni NA),
+// con los fallos antes que los avisos.
+func TestOtherFindingsSection(t *testing.T) {
+	var buf bytes.Buffer
+	WriteConsole(&buf, findingsReport(), false, false)
+	out := buf.String()
+	if !strings.Contains(out, "Otros hallazgos a corregir:") {
+		t.Fatal("falta la sección 'Otros hallazgos a corregir'")
+	}
+	others := section(out, "Otros hallazgos a corregir:")
+	for _, want := range []string{"FS-03", "KRN-09", "TIME-01"} {
+		if !strings.Contains(others, want) {
+			t.Errorf("'Otros hallazgos' debería incluir %s", want)
+		}
+	}
+	if strings.Contains(others, "SSH-02") {
+		t.Error("SSH-02 (severidad alta) va en críticos, no en 'Otros hallazgos'")
+	}
+	if strings.Contains(others, "OK-01") || strings.Contains(others, "NA-01") {
+		t.Error("PASS/NA no son hallazgos a corregir")
+	}
+	if idxFail, idxWarn := strings.Index(others, "KRN-09"), strings.Index(others, "TIME-01"); idxFail > idxWarn {
+		t.Error("los fallos deben listarse antes que los avisos")
+	}
+}
+
+// Una categoría sin checks aplicables (banda n/d) muestra "n/d", no un "0" que parece catástrofe.
+func TestCategoryNdShown(t *testing.T) {
+	var buf bytes.Buffer
+	WriteConsole(&buf, findingsReport(), false, false)
+	var audit string
+	for _, ln := range categoryLines(buf.String()) {
+		if strings.Contains(ln, "AUDIT") {
+			audit = ln
+		}
+	}
+	if audit == "" {
+		t.Fatal("no encontré la fila de AUDIT")
+	}
+	if !strings.Contains(audit, "n/d") {
+		t.Errorf("la categoría todo-N/A debe mostrar 'n/d', no '0': %q", audit)
+	}
+}
+
+// El pie con cómo exportar/ver más sale siempre; el de -v solo si no estás ya en verbose; el de
+// --profile full solo en perfil core.
+func TestFooterHints(t *testing.T) {
+	var buf bytes.Buffer
+	WriteConsole(&buf, findingsReport(), false, false)
+	out := buf.String()
+	if !strings.Contains(out, "talos audit --format html") {
+		t.Error("falta la pista de exportar a HTML")
+	}
+	if !strings.Contains(out, "talos audit -v") {
+		t.Error("sin -v activo, debería sugerir el detalle")
+	}
+
+	var bufV bytes.Buffer
+	WriteConsole(&bufV, findingsReport(), true, false)
+	if strings.Contains(bufV.String(), "Detalle por comprobación:") {
+		t.Error("con -v ya activo no debe sugerir el detalle")
+	}
+
+	core := findingsReport()
+	core.Profile = "core"
+	var bufC bytes.Buffer
+	WriteConsole(&bufC, core, false, false)
+	if !strings.Contains(bufC.String(), "talos audit --profile full") {
+		t.Error("en perfil core debe sugerir --profile full")
+	}
+}
+
+// La cabecera identifica el artefacto: host, SO y perfil en la primera línea.
+func TestReportHeaderShown(t *testing.T) {
+	var buf bytes.Buffer
+	WriteConsole(&buf, findingsReport(), false, false)
+	first := strings.SplitN(buf.String(), "\n", 2)[0]
+	for _, want := range []string{"srv-1", "debian", "2026-06-30", "perfil full"} {
+		if !strings.Contains(first, want) {
+			t.Errorf("la cabecera debería contener %q: %q", want, first)
+		}
+	}
+}
+
+// Sin fallos ni avisos (y con checks que aplicaron), el informe lo confirma en vez de quedar mudo.
+func TestAllClearLine(t *testing.T) {
+	r := findingsReport()
+	r.CriticalVulns = nil
+	r.Counts = score.Counts{Pass: 5}
+	r.Results = []Result{{CheckID: "OK-1", Status: "PASS", Category: "SSH"}}
+	var buf bytes.Buffer
+	WriteConsole(&buf, r, false, false)
+	if !strings.Contains(buf.String(), "Sin hallazgos que corregir") {
+		t.Error("sin fallos ni avisos debería confirmar 'Sin hallazgos que corregir'")
+	}
+}
+
+func TestHumanDate(t *testing.T) {
+	if got := humanDate("2026-06-30T08:00:00Z"); got != "2026-06-30 08:00 UTC" {
+		t.Errorf("humanDate = %q, esperaba '2026-06-30 08:00 UTC'", got)
+	}
+	if got := humanDate(""); got != "" {
+		t.Errorf("humanDate(\"\") = %q, esperaba vacío", got)
+	}
+	if got := humanDate("no-es-fecha"); got != "no-es-fecha" {
+		t.Errorf("humanDate sin parsear debe devolver crudo, dio %q", got)
+	}
+}
+
+// section devuelve las líneas de un bloque (desde su encabezado hasta la primera línea en blanco).
+func section(out, header string) string {
+	var b strings.Builder
+	in := false
+	for _, ln := range strings.Split(out, "\n") {
+		if strings.Contains(ln, header) {
+			in = true
+			continue
+		}
+		if in {
+			if strings.TrimSpace(ln) == "" {
+				break
+			}
+			b.WriteString(ln + "\n")
+		}
+	}
+	return b.String()
+}

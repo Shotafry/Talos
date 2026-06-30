@@ -3,8 +3,10 @@ package report
 import (
 	"fmt"
 	"io"
+	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/Shotafry/talos/internal/ansi"
 	"github.com/Shotafry/talos/internal/score"
@@ -27,6 +29,12 @@ const (
 func WriteConsole(w io.Writer, r Report, verbose, color bool) {
 	bc := bandColor(r.Band)
 
+	// --- Cabecera: que host, cuando y con que perfil (identifica el artefacto, tambien al -o) ---
+	if h := reportHeader(r); h != "" {
+		fmt.Fprintln(w, ansi.P(color, ansi.Dim, h))
+		fmt.Fprintln(w)
+	}
+
 	// --- Indice + medidor ---
 	fmt.Fprintln(w, ansi.P(color, ansi.Bold, "Índice de bastionado"))
 	fmt.Fprintf(w, "  %s  %s  %s\n",
@@ -46,12 +54,16 @@ func WriteConsole(w io.Writer, r Report, verbose, color bool) {
 	}
 	fmt.Fprintln(w)
 
-	// --- Hallazgos criticos (explicados: que pasa / detectado / solucion) ---
+	// --- Hallazgos criticos (severidad alta/critica): que pasa / detectado / solucion ---
+	// El conteo "N de M" deja claro que es un SUBCONJUNTO de los fallos totales (lo demas va
+	// en "Otros hallazgos"), no todos los fallos.
 	if len(r.CriticalVulns) > 0 {
-		fmt.Fprintln(w, ansi.P(color, ansi.Bold+ansi.Red, "Fallos críticos (arréglalos ya):"))
+		fmt.Fprintln(w, ansi.P(color, ansi.Bold+ansi.Red,
+			fmt.Sprintf("Fallos críticos (severidad alta/crítica) - %d de %d - arréglalos ya:",
+				len(r.CriticalVulns), r.Counts.Fail)))
 		for _, c := range r.CriticalVulns {
 			fmt.Fprintf(w, "  %s %s  %s\n",
-				ansi.P(color, ansi.Red, glyphFail),
+				statusMark("FAIL", color),
 				ansi.P(color, ansi.Bold, c.CheckID),
 				ansi.P(color, ansi.Dim, c.Category+" · severidad "+sevLabel(c.Severity)))
 			if c.Title != "" {
@@ -67,15 +79,44 @@ func WriteConsole(w io.Writer, r Report, verbose, color bool) {
 		fmt.Fprintln(w)
 	}
 
+	// --- Otros hallazgos (fallos medios/bajos + avisos): cabecera + solucion, mas compacto que
+	// los criticos (sin "detectado"). Sale SIEMPRE, sin -v: el standalone debe bastarse solo. ---
+	others := otherFindings(r.Results)
+	if len(others) > 0 {
+		fmt.Fprintln(w, ansi.P(color, ansi.Bold, "Otros hallazgos a corregir:"))
+		for _, res := range others {
+			fmt.Fprintf(w, "  %s %s  %s\n",
+				statusMark(res.Status, color),
+				ansi.P(color, ansi.Bold, res.CheckID),
+				ansi.P(color, ansi.Dim, res.Category+" · severidad "+sevLabel(res.Severity)))
+			switch {
+			case res.Remediation != "":
+				fmt.Fprintf(w, "      %s %s\n", ansi.P(color, ansi.Cyan+ansi.Bold, "solución:"), res.Remediation)
+			case res.Description != "":
+				fmt.Fprintf(w, "      %s\n", res.Description)
+			}
+		}
+		fmt.Fprintln(w)
+	}
+
+	// --- Todo en orden: ni fallos ni avisos pendientes (y hubo checks que aplicaron) ---
+	if len(r.CriticalVulns) == 0 && len(others) == 0 && r.Counts.Pass > 0 {
+		fmt.Fprintln(w, ansi.P(color, ansi.Green, glyphPass+" Sin hallazgos que corregir."))
+		fmt.Fprintln(w)
+	}
+
 	// --- Por categoria (mini-barra) ---
 	fmt.Fprintln(w, ansi.P(color, ansi.Bold, "Por categoría:"))
 	cw := countWidth(r.Categories)
 	for _, c := range r.Categories {
-		cbc := bandColor(c.Band)
+		idxCell := fmt.Sprintf("%3d", c.Index)
+		if c.Band == "n/d" { // sin checks aplicables: no es un 0, es que la categoria no aplica
+			idxCell = "n/d"
+		}
 		fmt.Fprintf(w, "  %-10s %s %s  %s\n",
 			c.Category,
 			gauge(c.Index, c.Band, color),
-			ansi.P(color, cbc, fmt.Sprintf("%3d", c.Index)),
+			ansi.P(color, bandColor(c.Band), idxCell),
 			categoryCounts(c.Counts, cw, color))
 	}
 
@@ -99,10 +140,120 @@ func WriteConsole(w io.Writer, r Report, verbose, color bool) {
 		}
 	}
 
-	// --- Sugerencia de cobertura ---
+	// --- Pie: como ver mas / exportar (siempre, para que sepas que existe) ---
+	writeFooter(w, r, verbose, color)
+}
+
+// reportHeader resume a quien y cuando audita esta corrida: "host · SO kernel · fecha · perfil".
+func reportHeader(r Report) string {
+	parts := make([]string, 0, 4)
+	if r.Host.Hostname != "" {
+		parts = append(parts, r.Host.Hostname)
+	}
+	if osk := strings.TrimSpace(r.Host.OS + " " + r.Host.Kernel); osk != "" {
+		parts = append(parts, osk)
+	}
+	if d := humanDate(r.GeneratedAt); d != "" {
+		parts = append(parts, d)
+	}
+	if r.Profile != "" {
+		parts = append(parts, "perfil "+r.Profile)
+	}
+	return strings.Join(parts, " · ")
+}
+
+// humanDate convierte el RFC3339 UTC del informe en "AAAA-MM-DD HH:MM UTC"; si no parsea, crudo.
+func humanDate(s string) string {
+	if s == "" {
+		return ""
+	}
+	t, err := time.Parse(time.RFC3339, s)
+	if err != nil {
+		return s
+	}
+	return t.UTC().Format("2006-01-02 15:04") + " UTC"
+}
+
+// otherFindings son los hallazgos accionables que NO van al bloque de criticos: fallos de
+// severidad media/baja y TODOS los avisos. Orden: fallos antes que avisos y, dentro, severidad
+// descendente, para que lo mas grave quede arriba.
+func otherFindings(results []Result) []Result {
+	out := make([]Result, 0)
+	for _, res := range results {
+		if (res.Status == "FAIL" && !isHighSeverity(res.Severity)) || res.Status == "WARN" {
+			out = append(out, res)
+		}
+	}
+	sort.SliceStable(out, func(i, j int) bool {
+		if a, b := statusOrder(out[i].Status), statusOrder(out[j].Status); a != b {
+			return a < b
+		}
+		return severityOrder(out[i].Severity) < severityOrder(out[j].Severity)
+	})
+	return out
+}
+
+func isHighSeverity(s string) bool { return s == "high" || s == "critical" }
+
+func statusOrder(s string) int {
+	if s == "FAIL" {
+		return 0
+	}
+	return 1 // WARN
+}
+
+func severityOrder(s string) int {
+	switch s {
+	case "critical":
+		return 0
+	case "high":
+		return 1
+	case "medium":
+		return 2
+	case "low":
+		return 3
+	default:
+		return 4
+	}
+}
+
+// writeFooter imprime, atenuado, como obtener mas (detalle -v, informe HTML imprimible). Lo que
+// no encaja en consola (lista completa con remediaciones) vive en el HTML; aqui se senala.
+func writeFooter(w io.Writer, r Report, verbose, color bool) {
+	type hint struct{ label, cmd string }
+	hints := []hint{{"Informe imprimible (HTML/PDF):", "talos audit --format html -o informe.html"}}
+	if !verbose {
+		hints = append(hints, hint{"Detalle por comprobación:", "talos audit -v"})
+	}
 	if r.Profile == "core" {
-		fmt.Fprintf(w, "\n%s\n", ansi.P(color, ansi.Cyan,
-			"Sugerencia: has corrido el perfil 'core' (rápido). Para el análisis completo, incluido el pack de vulnerabilidades por versión: talos audit --profile full"))
+		hints = append(hints, hint{"Análisis completo:", "talos audit --profile full"})
+	}
+	lw := 0
+	for _, h := range hints {
+		if n := len([]rune(h.label)); n > lw {
+			lw = n
+		}
+	}
+	fmt.Fprintln(w)
+	for _, h := range hints {
+		fmt.Fprintf(w, "  %s  %s\n",
+			ansi.P(color, ansi.Dim, padRunes(h.label, lw)),
+			ansi.P(color, ansi.Cyan, h.cmd))
+	}
+}
+
+// statusMark devuelve solo el glifo de estado, coloreado (sin la palabra). Para encabezados de
+// hallazgo donde el id y la severidad ya dan el contexto.
+func statusMark(status string, on bool) string {
+	switch status {
+	case "PASS":
+		return ansi.P(on, ansi.Green, glyphPass)
+	case "WARN":
+		return ansi.P(on, ansi.Yellow, glyphWarn)
+	case "FAIL":
+		return ansi.P(on, ansi.Red, glyphFail)
+	default:
+		return ansi.P(on, ansi.Dim, glyphNA)
 	}
 }
 
