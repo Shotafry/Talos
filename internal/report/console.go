@@ -3,9 +3,23 @@ package report
 import (
 	"fmt"
 	"io"
+	"strconv"
 	"strings"
 
 	"github.com/Shotafry/talos/internal/ansi"
+	"github.com/Shotafry/talos/internal/score"
+)
+
+// Glifos de estado, fuente unica para las tres zonas que los pintan (recuento, desglose por
+// categoria y detalle -v). Solo runas de ancho SIMPLE y presentacion de texto, para que las
+// columnas cuadren en cualquier terminal. NO usar ⚠ (U+26A0): Windows Terminal y muchos
+// terminales Linux lo pintan como emoji de DOBLE ancho y descuadra cada fila (se come el digito
+// siguiente). ▲ (U+25B2) es el triangulo de aviso en su forma de texto, mismo ancho que ✓/✗/·.
+const (
+	glyphPass = "✓"
+	glyphWarn = "▲"
+	glyphFail = "✗"
+	glyphNA   = "·"
 )
 
 // WriteConsole escribe un informe de texto legible (modo standalone/TTY). color activa los
@@ -22,10 +36,10 @@ func WriteConsole(w io.Writer, r Report, verbose, color bool) {
 
 	// --- Recuento ---
 	fmt.Fprintf(w, "  %s   %s   %s   %s\n",
-		ansi.P(color, ansi.Green, "✓ "+plural(r.Counts.Pass, "correcto", "correctos")),
-		ansi.P(color, ansi.Yellow, "⚠ "+plural(r.Counts.Warn, "aviso", "avisos")),
-		ansi.P(color, ansi.Red, "✗ "+plural(r.Counts.Fail, "fallo", "fallos")),
-		ansi.P(color, ansi.Dim, "· "+plural(r.Counts.NA, "no aplica", "no aplican")))
+		ansi.P(color, ansi.Green, glyphPass+" "+plural(r.Counts.Pass, "correcto", "correctos")),
+		ansi.P(color, ansi.Yellow, glyphWarn+" "+plural(r.Counts.Warn, "aviso", "avisos")),
+		ansi.P(color, ansi.Red, glyphFail+" "+plural(r.Counts.Fail, "fallo", "fallos")),
+		ansi.P(color, ansi.Dim, glyphNA+" "+plural(r.Counts.NA, "no aplica", "no aplican")))
 	if r.Excluded.NoPrivilege > 0 {
 		fmt.Fprintf(w, "  %s\n", ansi.P(color, ansi.Dim,
 			fmt.Sprintf("(%d comprobaciones omitidas por falta de privilegios; ejecuta con sudo para cobertura total)", r.Excluded.NoPrivilege)))
@@ -37,7 +51,7 @@ func WriteConsole(w io.Writer, r Report, verbose, color bool) {
 		fmt.Fprintln(w, ansi.P(color, ansi.Bold+ansi.Red, "Fallos críticos (arréglalos ya):"))
 		for _, c := range r.CriticalVulns {
 			fmt.Fprintf(w, "  %s %s  %s\n",
-				ansi.P(color, ansi.Red, "✗"),
+				ansi.P(color, ansi.Red, glyphFail),
 				ansi.P(color, ansi.Bold, c.CheckID),
 				ansi.P(color, ansi.Dim, c.Category+" · severidad "+sevLabel(c.Severity)))
 			if c.Title != "" {
@@ -47,7 +61,7 @@ func WriteConsole(w io.Writer, r Report, verbose, color bool) {
 				fmt.Fprintf(w, "      %s %s\n", ansi.P(color, ansi.Dim, "detectado:"), v)
 			}
 			if c.Remediation != "" {
-				fmt.Fprintf(w, "      %s %s\n", ansi.P(color, ansi.Cyan+ansi.Bold, "solución: "), c.Remediation)
+				fmt.Fprintf(w, "      %s %s\n", ansi.P(color, ansi.Cyan+ansi.Bold, "solución:"), c.Remediation)
 			}
 		}
 		fmt.Fprintln(w)
@@ -55,13 +69,14 @@ func WriteConsole(w io.Writer, r Report, verbose, color bool) {
 
 	// --- Por categoria (mini-barra) ---
 	fmt.Fprintln(w, ansi.P(color, ansi.Bold, "Por categoría:"))
+	cw := countWidth(r.Categories)
 	for _, c := range r.Categories {
 		cbc := bandColor(c.Band)
 		fmt.Fprintf(w, "  %-10s %s %s  %s\n",
 			c.Category,
 			gauge(c.Index, c.Band, color),
 			ansi.P(color, cbc, fmt.Sprintf("%3d", c.Index)),
-			ansi.P(color, ansi.Dim, fmt.Sprintf("✓%d ⚠%d ✗%d ·%d", c.Counts.Pass, c.Counts.Warn, c.Counts.Fail, c.Counts.NA)))
+			categoryCounts(c.Counts, cw, color))
 	}
 
 	// --- Detalle (-v): glifo + id + descripcion legible + valor/razon ---
@@ -119,18 +134,43 @@ func gauge(index int, band string, on bool) string {
 		ansi.P(on, ansi.Dim, strings.Repeat("░", width-filled))
 }
 
-// statusGlyph devuelve el estado con icono y color, ancho visible fijo (6) para alinear.
+// statusGlyph devuelve el estado con icono y color, ancho visible fijo (6 runas) para alinear
+// la columna de descripcion. Todos los glifos son de ancho simple (ver constantes arriba).
 func statusGlyph(status string, on bool) string {
 	switch status {
 	case "PASS":
-		return ansi.P(on, ansi.Green, "✓ PASS")
+		return ansi.P(on, ansi.Green, glyphPass+" PASS")
 	case "WARN":
-		return ansi.P(on, ansi.Yellow, "⚠ WARN")
+		return ansi.P(on, ansi.Yellow, glyphWarn+" WARN")
 	case "FAIL":
-		return ansi.P(on, ansi.Red, "✗ FAIL")
+		return ansi.P(on, ansi.Red, glyphFail+" FAIL")
 	default:
-		return ansi.P(on, ansi.Dim, "· NA  ")
+		return ansi.P(on, ansi.Dim, glyphNA+" NA  ")
 	}
+}
+
+// categoryCounts arma el desglose por categoria (✓ ▲ ✗ ·) con cada contador a ancho fijo w
+// (alineado a la derecha) y separacion uniforme, para que las columnas cuadren entre filas.
+func categoryCounts(c score.Counts, w int, on bool) string {
+	return ansi.P(on, ansi.Dim, fmt.Sprintf("%s%*d  %s%*d  %s%*d  %s%*d",
+		glyphPass, w, c.Pass,
+		glyphWarn, w, c.Warn,
+		glyphFail, w, c.Fail,
+		glyphNA, w, c.NA))
+}
+
+// countWidth es el numero de digitos del contador mas grande de todas las categorias; con el
+// se alinean las columnas del desglose sin cablear un ancho a ojo.
+func countWidth(cats []score.CategoryScore) int {
+	w := 1
+	for _, c := range cats {
+		for _, n := range [4]int{c.Counts.Pass, c.Counts.Warn, c.Counts.Fail, c.Counts.NA} {
+			if d := len(strconv.Itoa(n)); d > w {
+				w = d
+			}
+		}
+	}
+	return w
 }
 
 func sevLabel(s string) string {

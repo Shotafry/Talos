@@ -3,7 +3,7 @@ checks:
   # OFFLINE: en nativo NO aporta sobre Trivy/OSV, que ya cubren CVEs por versión). Detecta una
   # instalacion SIN actualizar comparando la versión instalada con la PRIMERA versión corregida
   # POR DISTRO+RELEASE (no upstream): los distros parchean por backport sin subir la versión
-  # upstream, así que un fixed-versión upstream daría FALSOS POSITIVOS masivos (leccion CLAUDE
+  # upstream, así que un fixed-version upstream daría FALSOS POSITIVOS masivos (leccion CLAUDE
   # 9.14). Solo se curan CVEs donde la release SALIO vulnerable y se corrigio con +debXuY/ubuntuN
   # (las CVEs antiguas que ya salieron corregidas de fabrica las cubre Trivy/OSV, no este pack).
   # Versiones-fix verificadas contra Debian Security Tracker + Ubuntu CVE Tracker (2026-06-25).
