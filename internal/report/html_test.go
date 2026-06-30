@@ -35,26 +35,28 @@ func TestWriteHTML(t *testing.T) {
 	}
 	out := b.String()
 	for _, want := range []string{
-		"<!doctype html>", "srv-test", "TALOS", "WIN-SMB-02",
-		"Activa la firma SMB.", "--p:64%", "conic-gradient",
+		"<!doctype html>", "srv-test", "TALOS", "Informe de bastionado",
+		"WIN-SMB-02", "Activa la firma SMB.", "Todas las comprobaciones",
 	} {
 		if !strings.Contains(out, want) {
 			t.Errorf("el HTML no contiene %q", want)
 		}
 	}
-	// La remediacion NO debe mostrarse para checks en PASS (columna vacia).
-	if strings.Count(out, "Activa la firma SMB.") < 1 {
-		t.Errorf("falta la remediacion del fallo")
+	if strings.Contains(out, "guardian de bronce") {
+		t.Error("el informe ya no debe llevar el lema 'guardian de bronce'")
 	}
 }
 
-// Asegura que buildHTMLView ordena lo accionable primero (FAIL antes que PASS).
+// buildHTMLView ordena lo accionable primero (FAIL antes que PASS) para el explorador.
 func TestBuildHTMLView_OrdenAccionable(t *testing.T) {
 	v := buildHTMLView(sampleReport())
-	if len(v.Groups) != 1 || len(v.Groups[0].Results) != 2 {
-		t.Fatalf("grupos inesperados: %+v", v.Groups)
+	if len(v.Findings) != 2 {
+		t.Fatalf("esperaba 2 findings, hay %d", len(v.Findings))
 	}
-	if v.Groups[0].Results[0].Status != "FAIL" {
-		t.Errorf("primero debe ir el FAIL, no %q", v.Groups[0].Results[0].Status)
+	if v.Findings[0].Status != "FAIL" {
+		t.Errorf("primero debe ir el FAIL, no %q", v.Findings[0].Status)
+	}
+	if v.Summary == "" {
+		t.Error("la vista debe traer un resumen ejecutivo")
 	}
 }

@@ -94,8 +94,9 @@ func runAudit(cmd string, args []string) int {
 
 	checks := selectChecks(cat.Checks, hostFacts.OS, *profile, parseCSVSet(*only))
 
+	outFormat := effectiveFormat(*format, *output)
 	useColor := wantColor(*colorMode, *output)
-	if !*quiet && resolvedFormat(*format) == "text" && *output == "" {
+	if !*quiet && outFormat == "text" && *output == "" {
 		printBanner(cat.Meta.Version, osFamily(hostFacts.OS), useColor)
 	}
 
@@ -151,7 +152,7 @@ func runAudit(cmd string, args []string) int {
 		defer f.Close()
 		w = f
 	}
-	switch resolvedFormat(*format) {
+	switch outFormat {
 	case "json":
 		_ = report.WriteJSON(w, rep)
 	case "html":
@@ -337,6 +338,24 @@ func resolvedFormat(f string) string {
 	}
 }
 
+// effectiveFormat resuelve el formato de salida: si se pasa --format explicito manda; si no, se
+// infiere de la extension del fichero de salida (-o informe.html -> html, .json -> json) para
+// que guardar un .html no acabe siendo texto plano con extension equivocada. Sin -o, texto.
+func effectiveFormat(format, output string) string {
+	switch format {
+	case "json", "html", "text":
+		return format
+	}
+	switch lower := strings.ToLower(output); {
+	case strings.HasSuffix(lower, ".html"), strings.HasSuffix(lower, ".htm"):
+		return "html"
+	case strings.HasSuffix(lower, ".json"):
+		return "json"
+	default:
+		return "text"
+	}
+}
+
 func printBanner(catVersion, osFam string, color bool) {
 	fmt.Print(ansi.P(color, ansi.Bronze, asciiBadge))
 	fmt.Printf("  %s   %s\n",
@@ -386,13 +405,20 @@ Perfiles (--profile, por defecto 'core'):
 
 Flags de audit:
   --only <cat,cat>      limita a categorías (p.ej. SSH,KERNEL)
-  --format json|html|text  (por defecto text; html = informe imprimible a PDF)
-  --output, -o <file>   escribe a fichero
+  --output, -o <file>   escribe el informe a un fichero; la EXTENSIÓN elige el formato
+                        (.html = informe imprimible/interactivo, .json = datos)
+  --format json|html|text  fuerza el formato (por defecto: el de la extensión de -o, o texto)
   --color auto|always|never  (por defecto auto: color solo si la salida es un terminal)
   --quiet, -q           sin banner
   --verbose, -v         detalle por comprobación
   --catalog <dir>       catálogo externo
   --timeout <ms>        timeout por probe (por defecto 5000)
+
+Ejemplos:
+  talos audit                     auditoría rápida en pantalla
+  talos audit --profile full      análisis completo (incluye vulnerabilidades por versión)
+  talos audit -o informe.html     informe imprimible y interactivo (ábrelo en el navegador)
+  sudo talos audit                cobertura total (algunas comprobaciones piden privilegios)
 `)
 }
 

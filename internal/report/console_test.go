@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Shotafry/talos/internal/ansi"
 	"github.com/Shotafry/talos/internal/score"
 )
 
@@ -129,7 +130,7 @@ func findingsReport() Report {
 		},
 		Results: []Result{
 			{CheckID: "SSH-02", Status: "FAIL", Severity: "high", Category: "SSH", Description: "Auth por contraseña", Remediation: "PasswordAuthentication no"},
-			{CheckID: "FS-03", Status: "FAIL", Severity: "medium", Category: "FS", Description: "umask laxo", Remediation: "Pon umask 027"},
+			{CheckID: "FS-03", Status: "FAIL", Severity: "medium", Category: "FS", Description: "umask laxo", ValueRead: "077", Remediation: "Pon umask 027"},
 			{CheckID: "KRN-09", Status: "FAIL", Severity: "low", Category: "KERNEL", Description: "dmesg abierto", Remediation: "kernel.dmesg_restrict=1"},
 			{CheckID: "TIME-01", Status: "WARN", Severity: "medium", Category: "TIME", Description: "NTP sin fijar", Remediation: "Activa NTP"},
 			{CheckID: "OK-01", Status: "PASS", Severity: "low", Category: "SSH", Description: "todo bien"},
@@ -162,6 +163,24 @@ func TestOtherFindingsSection(t *testing.T) {
 	if idxFail, idxWarn := strings.Index(others, "KRN-09"), strings.Index(others, "TIME-01"); idxFail > idxWarn {
 		t.Error("los fallos deben listarse antes que los avisos")
 	}
+	// Igual que los críticos: cada hallazgo explica el qué (descripción) y el valor detectado,
+	// no solo la solución (sin eso no se sabe qué se está corrigiendo).
+	if !strings.Contains(others, "umask laxo") {
+		t.Error("'Otros hallazgos' debe incluir la descripción (el qué pasa)")
+	}
+	if !strings.Contains(others, "detectado:") || !strings.Contains(others, "077") {
+		t.Error("'Otros hallazgos' debe incluir el valor detectado, como los críticos")
+	}
+}
+
+// El título de "Otros hallazgos" va coloreado (amarillo) para marcar jerarquía frente al rojo
+// de los críticos y al neutro de las secciones informativas.
+func TestOtherFindingsTitleColored(t *testing.T) {
+	var buf bytes.Buffer
+	WriteConsole(&buf, findingsReport(), false, true) // color ON
+	if !strings.Contains(buf.String(), ansi.Bold+ansi.Yellow+"Otros hallazgos a corregir:") {
+		t.Error("el título de 'Otros hallazgos' debería ir en amarillo (Bold+Yellow)")
+	}
 }
 
 // Una categoría sin checks aplicables (banda n/d) muestra "n/d", no un "0" que parece catástrofe.
@@ -188,8 +207,8 @@ func TestFooterHints(t *testing.T) {
 	var buf bytes.Buffer
 	WriteConsole(&buf, findingsReport(), false, false)
 	out := buf.String()
-	if !strings.Contains(out, "talos audit --format html") {
-		t.Error("falta la pista de exportar a HTML")
+	if !strings.Contains(out, "talos audit -o informe.html") {
+		t.Error("falta la pista de exportar a HTML (comando corto)")
 	}
 	if !strings.Contains(out, "talos audit -v") {
 		t.Error("sin -v activo, debería sugerir el detalle")

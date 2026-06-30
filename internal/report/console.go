@@ -62,39 +62,19 @@ func WriteConsole(w io.Writer, r Report, verbose, color bool) {
 			fmt.Sprintf("Fallos críticos (severidad alta/crítica) - %d de %d - arréglalos ya:",
 				len(r.CriticalVulns), r.Counts.Fail)))
 		for _, c := range r.CriticalVulns {
-			fmt.Fprintf(w, "  %s %s  %s\n",
-				statusMark("FAIL", color),
-				ansi.P(color, ansi.Bold, c.CheckID),
-				ansi.P(color, ansi.Dim, c.Category+" · severidad "+sevLabel(c.Severity)))
-			if c.Title != "" {
-				fmt.Fprintf(w, "      %s\n", c.Title)
-			}
-			if v := cleanValue(c.ValueRead); v != "" {
-				fmt.Fprintf(w, "      %s %s\n", ansi.P(color, ansi.Dim, "detectado:"), v)
-			}
-			if c.Remediation != "" {
-				fmt.Fprintf(w, "      %s %s\n", ansi.P(color, ansi.Cyan+ansi.Bold, "solución:"), c.Remediation)
-			}
+			writeFinding(w, color, "FAIL", c.CheckID, c.Category, c.Severity, c.Title, c.ValueRead, c.Remediation)
 		}
 		fmt.Fprintln(w)
 	}
 
-	// --- Otros hallazgos (fallos medios/bajos + avisos): cabecera + solucion, mas compacto que
-	// los criticos (sin "detectado"). Sale SIEMPRE, sin -v: el standalone debe bastarse solo. ---
+	// --- Otros hallazgos (fallos medios/bajos + avisos): mismo formato que los criticos (que
+	// pasa / detectado / solucion), solo cambia el titulo. Sale SIEMPRE, sin -v: el standalone
+	// debe bastarse solo, y sin la explicacion no se sabe que se esta corrigiendo. ---
 	others := otherFindings(r.Results)
 	if len(others) > 0 {
-		fmt.Fprintln(w, ansi.P(color, ansi.Bold, "Otros hallazgos a corregir:"))
+		fmt.Fprintln(w, ansi.P(color, ansi.Bold+ansi.Yellow, "Otros hallazgos a corregir:"))
 		for _, res := range others {
-			fmt.Fprintf(w, "  %s %s  %s\n",
-				statusMark(res.Status, color),
-				ansi.P(color, ansi.Bold, res.CheckID),
-				ansi.P(color, ansi.Dim, res.Category+" · severidad "+sevLabel(res.Severity)))
-			switch {
-			case res.Remediation != "":
-				fmt.Fprintf(w, "      %s %s\n", ansi.P(color, ansi.Cyan+ansi.Bold, "solución:"), res.Remediation)
-			case res.Description != "":
-				fmt.Fprintf(w, "      %s\n", res.Description)
-			}
+			writeFinding(w, color, res.Status, res.CheckID, res.Category, res.Severity, res.Description, res.ValueRead, res.Remediation)
 		}
 		fmt.Fprintln(w)
 	}
@@ -221,7 +201,7 @@ func severityOrder(s string) int {
 // no encaja en consola (lista completa con remediaciones) vive en el HTML; aqui se senala.
 func writeFooter(w io.Writer, r Report, verbose, color bool) {
 	type hint struct{ label, cmd string }
-	hints := []hint{{"Informe imprimible (HTML/PDF):", "talos audit --format html -o informe.html"}}
+	hints := []hint{{"Informe imprimible (HTML/PDF):", "talos audit -o informe.html"}}
 	if !verbose {
 		hints = append(hints, hint{"Detalle por comprobación:", "talos audit -v"})
 	}
@@ -239,6 +219,26 @@ func writeFooter(w io.Writer, r Report, verbose, color bool) {
 		fmt.Fprintf(w, "  %s  %s\n",
 			ansi.P(color, ansi.Dim, padRunes(h.label, lw)),
 			ansi.P(color, ansi.Cyan, h.cmd))
+	}
+}
+
+// writeFinding pinta un hallazgo accionable con todo el contexto: cabecera (glifo + id +
+// categoria/severidad), que pasa (descripcion), valor detectado y como arreglarlo. Lo comparten
+// el bloque de criticos y el de "otros hallazgos" para que AMBOS expliquen igual el problema:
+// sin la descripcion solo sabrias como arreglarlo, no que estas arreglando.
+func writeFinding(w io.Writer, color bool, status, checkID, category, severity, description, valueRead, remediation string) {
+	fmt.Fprintf(w, "  %s %s  %s\n",
+		statusMark(status, color),
+		ansi.P(color, ansi.Bold, checkID),
+		ansi.P(color, ansi.Dim, category+" · severidad "+sevLabel(severity)))
+	if description != "" {
+		fmt.Fprintf(w, "      %s\n", description)
+	}
+	if v := cleanValue(valueRead); v != "" {
+		fmt.Fprintf(w, "      %s %s\n", ansi.P(color, ansi.Dim, "detectado:"), v)
+	}
+	if remediation != "" {
+		fmt.Fprintf(w, "      %s %s\n", ansi.P(color, ansi.Cyan+ansi.Bold, "solución:"), remediation)
 	}
 }
 

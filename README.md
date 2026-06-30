@@ -39,7 +39,8 @@ que patrulla cada máquina y audita su seguridad.
   Ubuntu. Detectan paquetes sin parchear comparando con la versión corregida **por
   distribución y release** (sin falsos positivos por backport): PwnKit, Looney
   Tunables, regreSSHion, sudoedit, polkit, glibc iconv...
-- **Informe usable.** Consola **con color y medidor**, JSON o **HTML imprimible a PDF**.
+- **Informe usable.** Consola **con color y medidor**, JSON, o **HTML interactivo**
+  (filtros, buscador y tema claro/oscuro) que también **imprime a PDF**.
 
 ---
 
@@ -154,11 +155,15 @@ arm64) y generar `SHA256SUMS`, igual que hace la release:
 Una vez tienes el binario:
 
 ```bash
-talos audit                              # informe en consola, aquí y ahora
-talos audit --format html -o talos.html  # informe imprimible a PDF (ábrelo e imprime)
-talos audit --profile full               # análisis completo (+ repertorio de vulns por versión)
-talos --help                             # todos los comandos y flags
+talos audit                        # informe en consola, aquí y ahora
+talos audit -o informe.html        # informe HTML interactivo (la extensión elige el formato)
+talos audit --profile full         # análisis completo (+ repertorio de vulns por versión)
+talos --help                       # todos los comandos y flags
 ```
+
+El formato sale de la **extensión** del fichero de `-o`: `.html` genera el informe
+interactivo (ábrelo en el navegador o imprímelo a PDF) y `.json` los datos en crudo.
+Puedes forzarlo con `--format` si lo necesitas.
 
 Con root (Linux) o como Administrador (Windows) la cobertura es total. Sin
 privilegios, las comprobaciones que los requieren se marcan "no aplica" (no
@@ -207,8 +212,9 @@ talos version         versión del binario
 flags de audit:
   --profile core|deep|full|critical   (default core)
   --only <cat,cat>     limita a categorías
-  --format json|html|text             (html = imprimible a PDF)
-  --output, -o <file>  escribe a fichero
+  --output, -o <file>  escribe a fichero; la extensión elige el formato
+                       (.html = informe interactivo, .json = datos)
+  --format json|html|text   fuerza el formato (por defecto: el de la extensión, o texto)
   --quiet, -q  /  --verbose, -v
 ```
 
