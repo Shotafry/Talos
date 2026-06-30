@@ -37,6 +37,7 @@ func TestWriteHTML(t *testing.T) {
 	for _, want := range []string{
 		"<!doctype html>", "srv-test", "TALOS", "Informe de bastionado",
 		"WIN-SMB-02", "Activa la firma SMB.", "Todas las comprobaciones",
+		"Severidad", "data-sev=", "--bronze", "Moderado",
 	} {
 		if !strings.Contains(out, want) {
 			t.Errorf("el HTML no contiene %q", want)

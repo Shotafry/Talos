@@ -65,8 +65,9 @@ func execSummary(r Report) string {
 }
 
 var htmlFuncs = template.FuncMap{
-	"sevLabel": sevLabel,
-	"lower":    strings.ToLower,
+	"sevLabel":     sevLabel,
+	"postureLabel": postureLabel,
+	"lower":        strings.ToLower,
 	"bandKey": func(b string) string {
 		switch b {
 		case "verde":
@@ -80,6 +81,18 @@ var htmlFuncs = template.FuncMap{
 		}
 	},
 	"statusKey": func(s string) string { return strings.ToLower(s) },
+	"sevTone": func(s string) string {
+		switch s {
+		case "critical":
+			return "crit"
+		case "high":
+			return "high"
+		case "medium":
+			return "med"
+		default:
+			return "low"
+		}
+	},
 	"statusLabel": func(s string) string {
 		switch s {
 		case "PASS":
@@ -103,23 +116,25 @@ const htmlDoc = `<!doctype html>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Talos · Informe de bastionado · {{.R.Host.Hostname}}</title>
 <style>
-  /* Tema CLARO (por defecto) */
+  /* Tema CLARO (por defecto). --bronze = color de marca (chrome), aparte de la escala de
+     severidad rojo/ambar/verde, que es solo para datos. */
   .page{
-    --paper:#FCFCFD; --surface:#FFFFFF; --ink:#1A1D23; --muted:#646B78; --line:#E7E9EE; --line-soft:#EEF0F4;
-    --code-bg:rgba(0,0,0,.05);
+    --paper:#FCFBF9; --surface:#FFFFFF; --ink:#1A1D23; --muted:#5F6670; --line:#E6E4DF; --line-soft:#EEEDE8;
+    --bronze:#9A6B2F; --code-bg:rgba(0,0,0,.05);
     --red:#C13B32; --red-fill:#FCEBE8; --red-line:#F2CEC8;
-    --amber:#996B12; --amber-fill:#FBF1DA; --amber-line:#EEDFB6;
+    --amber:#9A6B12; --amber-fill:#FBF1DA; --amber-line:#EEDFB6;
     --green:#2E7D4A; --green-fill:#E9F4ED; --green-line:#CDE6D6;
     --slate:#5A6472; --slate-fill:#EFF1F5; --slate-line:#DDE1E8;
   }
-  /* Tema OSCURO */
+  /* Tema OSCURO. Superficies y bordes con paso claro respecto al fondo para que todo se
+     distinga; severidad y bronce subidos de luz para contrastar sobre el oscuro. */
   .page[data-theme="dark"]{
-    --paper:#0E1217; --surface:#161C24; --ink:#E7ECF3; --muted:#8B96A6; --line:#262E3A; --line-soft:#1B222C;
-    --code-bg:rgba(255,255,255,.08);
-    --red:#F2837B; --red-fill:#2A1714; --red-line:#5A2C26;
-    --amber:#E3AC53; --amber-fill:#271F11; --amber-line:#564224;
-    --green:#67C088; --green-fill:#142519; --green-line:#2A4A35;
-    --slate:#9AA5B4; --slate-fill:#1A212B; --slate-line:#333C49;
+    --paper:#0F141B; --surface:#1A2230; --ink:#F3F6FA; --muted:#AEB8C6; --line:#333F50; --line-soft:#26303F;
+    --bronze:#D8A862; --code-bg:rgba(255,255,255,.09);
+    --red:#F4847C; --red-fill:#2E1714; --red-line:#6B332B;
+    --amber:#E6B05A; --amber-fill:#2B2113; --amber-line:#5E4827;
+    --green:#6CC68C; --green-fill:#15281C; --green-line:#2F523C;
+    --slate:#9FAAB9; --slate-fill:#1E2733; --slate-line:#3A4555;
   }
   :root{
     --mono:ui-monospace,"Cascadia Code","SF Mono",Menlo,Consolas,monospace;
@@ -128,11 +143,11 @@ const htmlDoc = `<!doctype html>
   *{box-sizing:border-box}
   body{margin:0;font-family:var(--sans);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
   .page{min-height:100vh;background:var(--paper);color:var(--ink);transition:background .2s,color .2s}
-  .wrap{max-width:1040px;margin:0 auto;padding:40px 28px 80px}
+  .wrap{max-width:1040px;margin:0 auto;padding:40px 28px 80px;color:var(--ink)}
 
   /* Masthead */
-  .mast{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;padding-bottom:18px;border-bottom:1px solid var(--ink)}
-  .word{font-family:var(--mono);font-size:30px;font-weight:700;letter-spacing:.34em;margin:0 0 2px}
+  .mast{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;padding-bottom:18px;border-bottom:2px solid var(--bronze)}
+  .word{font-family:var(--mono);font-size:30px;font-weight:700;letter-spacing:.34em;margin:0 0 2px;color:var(--bronze)}
   .tagline{font-size:13px;color:var(--muted);letter-spacing:.02em}
   .mast-right{display:flex;flex-direction:column;align-items:flex-end;gap:10px}
   .meta{font-family:var(--mono);font-size:12px;color:var(--muted);text-align:right;line-height:1.7;white-space:nowrap}
@@ -168,11 +183,11 @@ const htmlDoc = `<!doctype html>
 
   /* Section headers */
   h2{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:48px 0 16px;display:flex;align-items:center;gap:10px}
-  h2::before{content:"";width:18px;height:2px;background:var(--ink);border-radius:2px}
+  h2::before{content:"";width:18px;height:2px;background:var(--bronze);border-radius:2px}
   h2.crit{color:var(--red)} h2.crit::before{background:var(--red)}
 
   /* Finding cards (pastel, sin borde neon) */
-  .card{border-radius:14px;padding:18px 20px;margin-bottom:12px;background:var(--red-fill);border:1px solid var(--red-line)}
+  .card{border-radius:14px;padding:18px 20px;margin-bottom:12px;background:var(--red-fill);border:1px solid var(--red-line);color:var(--ink)}
   .card .what{font-size:15px;font-weight:600;margin:0 0 12px;line-height:1.5}
   .card .ref{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-family:var(--mono);font-size:12.5px;color:var(--muted);margin-bottom:10px}
   .card .id{color:var(--ink);font-weight:600}
@@ -184,12 +199,19 @@ const htmlDoc = `<!doctype html>
   .s-fail{background:var(--red-fill);color:var(--red)} .s-warn{background:var(--amber-fill);color:var(--amber)}
   .s-pass{background:var(--green-fill);color:var(--green)} .s-na{background:var(--slate-fill);color:var(--slate)}
 
+  /* Severidad: cuatro niveles, del más grave (sólido) al más leve (apagado) */
+  .sv{display:inline-block;font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.04em;padding:2px 7px;border-radius:6px;text-transform:uppercase;white-space:nowrap}
+  .sv-crit{background:var(--red);color:var(--paper)}
+  .sv-high{background:var(--red-fill);color:var(--red);border:1px solid var(--red-line)}
+  .sv-med{background:var(--amber-fill);color:var(--amber)}
+  .sv-low{background:var(--slate-fill);color:var(--slate)}
+
   /* Category bars */
   .cat{display:grid;grid-template-columns:120px 1fr auto;align-items:center;gap:14px;padding:7px 0;cursor:pointer}
   .cat:hover .cat-name{color:var(--ink)}
   .cat-name{font-family:var(--mono);font-size:13px;color:var(--muted)}
   .cat-track{height:8px;border-radius:6px;background:var(--line-soft);overflow:hidden}
-  .cat-fill{height:100%;border-radius:6px}
+  .cat-fill{display:block;height:100%;border-radius:6px;min-width:2px}
   .fill-red{background:var(--red)} .fill-amber{background:var(--amber)} .fill-green{background:var(--green)} .fill-na{background:var(--slate-line)}
   .cat-val{font-family:var(--mono);font-size:12px;color:var(--muted);min-width:54px;text-align:right}
 
@@ -202,11 +224,15 @@ const htmlDoc = `<!doctype html>
   select,.search{font:inherit;font-size:13px;border:1px solid var(--line);border-radius:10px;padding:7px 12px;background:var(--surface);color:var(--ink)}
   .search{min-width:200px;flex:1}
   .shown{font-family:var(--mono);font-size:12px;color:var(--muted);margin-left:auto}
-  table{width:100%;border-collapse:collapse;font-size:14px}
+  table{width:100%;border-collapse:collapse;font-size:14px;table-layout:fixed}
+  /* Columnas cortas a la izquierda; las dos de texto (comprobación + remediación) anchas y
+     juntas, para que el texto no se parta en una tira vertical que estira las filas. */
+  .c-est{width:8%} .c-sev{width:9%} .c-cat{width:10%} .c-det{width:11%} .c-comp{width:31%} .c-rem{width:31%}
   th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600;padding:8px 12px;border-bottom:1px solid var(--line)}
-  td{padding:11px 12px;border-bottom:1px solid var(--line-soft);vertical-align:top}
+  td{padding:11px 12px;border-bottom:1px solid var(--line-soft);vertical-align:top;overflow-wrap:break-word;color:var(--ink)}
   td .id{font-family:var(--mono);font-size:12px;color:var(--muted);display:block;margin-top:3px}
-  td.rem{color:var(--muted);font-size:13px}
+  .fix-cell{font-size:13.5px}
+  .reason{color:var(--muted);font-size:12px;margin-top:4px}
   .empty{display:none;padding:28px;text-align:center;color:var(--muted)}
 
   footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--line);font-family:var(--mono);font-size:11.5px;color:var(--muted);line-height:1.8}
@@ -220,7 +246,7 @@ const htmlDoc = `<!doctype html>
     .table-scroll{overflow-x:auto}
   }
   @media print{
-    .page[data-theme="dark"]{--paper:#fff;--surface:#fff;--ink:#111;--muted:#555;--line:#ddd;--line-soft:#eee;--code-bg:rgba(0,0,0,.05);
+    .page[data-theme="dark"]{--paper:#fff;--surface:#fff;--ink:#111;--muted:#555;--line:#ddd;--line-soft:#eee;--bronze:#9A6B2F;--code-bg:rgba(0,0,0,.05);
       --red:#C13B32;--red-fill:#FCEBE8;--red-line:#F2CEC8;--amber:#996B12;--amber-fill:#FBF1DA;--amber-line:#EEDFB6;
       --green:#2E7D4A;--green-fill:#E9F4ED;--green-line:#CDE6D6;--slate:#5A6472;--slate-fill:#EFF1F5;--slate-line:#DDE1E8;}
     .toolbar,.tile,.theme-toggle{display:none!important}
@@ -253,7 +279,7 @@ const htmlDoc = `<!doctype html>
   <section class="hero">
     <div>
       <div class="score-num band-{{bandKey .R.Band}}">{{.R.Index}}<span class="score-slash">/100</span></div>
-      <div class="score-band band-{{bandKey .R.Band}}">{{.R.Band}}</div>
+      <div class="score-band band-{{bandKey .R.Band}}">{{postureLabel .R.Index}}</div>
       <div class="meter">
         <div class="meter-track">
           <span class="z z-red"></span><span class="z z-amber"></span><span class="z z-green"></span>
@@ -302,6 +328,13 @@ const htmlDoc = `<!doctype html>
       <button data-status="PASS">Correctos</button>
       <button data-status="NA">N/A</button>
     </div>
+    <select id="sevSel" aria-label="Filtrar por severidad">
+      <option value="">Toda severidad</option>
+      <option value="critical">Crítica</option>
+      <option value="high">Alta</option>
+      <option value="medium">Media</option>
+      <option value="low">Baja</option>
+    </select>
     <select id="catSel" aria-label="Filtrar por categoría">
       <option value="">Todas las categorías</option>
       {{range .R.Categories}}<option value="{{.Category}}">{{.Category}}</option>{{end}}
@@ -311,15 +344,17 @@ const htmlDoc = `<!doctype html>
   </div>
   <div class="table-scroll">
   <table>
-    <thead><tr><th>Estado</th><th>Categoría</th><th>Comprobación</th><th>Detectado</th><th>Remediación</th></tr></thead>
+    <colgroup><col class="c-est"><col class="c-sev"><col class="c-cat"><col class="c-det"><col class="c-comp"><col class="c-rem"></colgroup>
+    <thead><tr><th>Estado</th><th>Severidad</th><th>Categoría</th><th>Detectado</th><th>Comprobación</th><th>Remediación</th></tr></thead>
     <tbody id="rows">
     {{range .Findings}}
-      <tr data-status="{{.Status}}" data-cat="{{.Category}}" data-text="{{lower .CheckID}} {{lower .Description}} {{lower .Category}}">
+      <tr data-status="{{.Status}}" data-sev="{{.Severity}}" data-cat="{{.Category}}" data-text="{{lower .CheckID}} {{lower .Description}} {{lower .Category}}">
         <td><span class="chip s-{{statusKey .Status}}">{{statusLabel .Status}}</span></td>
+        <td><span class="sv sv-{{sevTone .Severity}}">{{sevLabel .Severity}}</span></td>
         <td>{{.Category}}</td>
-        <td>{{.Description}}<span class="id">{{.CheckID}} · severidad {{sevLabel .Severity}}</span></td>
-        <td>{{if .ValueRead}}<code>{{.ValueRead}}</code>{{end}}{{if .Reason}}<div class="rem">{{.Reason}}</div>{{end}}</td>
-        <td class="rem">{{if ne .Status "PASS"}}{{.Remediation}}{{end}}</td>
+        <td>{{if .ValueRead}}<code>{{.ValueRead}}</code>{{end}}{{if .Reason}}<div class="reason">{{.Reason}}</div>{{end}}</td>
+        <td>{{.Description}}<span class="id">{{.CheckID}}</span></td>
+        <td class="fix-cell">{{if ne .Status "PASS"}}{{.Remediation}}{{end}}</td>
       </tr>
     {{end}}
     </tbody>
@@ -346,11 +381,12 @@ const htmlDoc = `<!doctype html>
 
   var rows=[].slice.call(document.querySelectorAll('#rows tr'));
   var shown=document.getElementById('shown'), empty=document.getElementById('empty');
-  var fStatus='', fCat='', fSearch='';
+  var fStatus='', fSev='', fCat='', fSearch='';
   function apply(){
     var n=0;
     rows.forEach(function(r){
       var ok=(!fStatus||r.getAttribute('data-status')===fStatus)
+          &&(!fSev||r.getAttribute('data-sev')===fSev)
           &&(!fCat||r.getAttribute('data-cat')===fCat)
           &&(!fSearch||r.getAttribute('data-text').indexOf(fSearch)>-1);
       r.style.display=ok?'':'none'; if(ok)n++;
@@ -380,6 +416,7 @@ const htmlDoc = `<!doctype html>
       document.getElementById('explorer').scrollIntoView({behavior:'smooth'});
     });
   });
+  document.getElementById('sevSel').addEventListener('change',function(e){ fSev=e.target.value; apply(); });
   document.getElementById('catSel').addEventListener('change',function(e){ fCat=e.target.value; apply(); });
   document.getElementById('search').addEventListener('input',function(e){ fSearch=e.target.value.toLowerCase().trim(); apply(); });
   apply();

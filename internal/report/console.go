@@ -40,7 +40,7 @@ func WriteConsole(w io.Writer, r Report, verbose, color bool) {
 	fmt.Fprintf(w, "  %s  %s  %s\n",
 		gauge(r.Index, r.Band, color),
 		ansi.P(color, ansi.Bold+bc, fmt.Sprintf("%d/100", r.Index)),
-		ansi.P(color, bc, r.Band))
+		ansi.P(color, bc, postureLabel(r.Index)))
 
 	// --- Recuento ---
 	fmt.Fprintf(w, "  %s   %s   %s   %s\n",
@@ -254,6 +254,22 @@ func statusMark(status string, on bool) string {
 		return ansi.P(on, ansi.Red, glyphFail)
 	default:
 		return ansi.P(on, ansi.Dim, glyphNA)
+	}
+}
+
+// postureLabel traduce el indice a un nivel de bastionado legible. La banda interna
+// (rojo/amarillo/verde) se queda para el COLOR; esto es la etiqueta con significado que ve el
+// usuario, en vez del nombre del color. Excelente se reserva para >=90.
+func postureLabel(index int) string {
+	switch {
+	case index >= 90:
+		return "Excelente"
+	case index >= 80:
+		return "Bueno"
+	case index >= 50:
+		return "Moderado"
+	default:
+		return "Deficiente"
 	}
 }
 
