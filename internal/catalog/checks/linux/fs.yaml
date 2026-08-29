@@ -94,3 +94,57 @@ checks:
     remediation: "Añade noexec a las opciones de montaje de /dev/shm en /etc/fstab y vuelve a montarlo con `mount -o remount /dev/shm`."
     ensControls: ["op.exp.2"]
     syntaxConfidence: high
+
+  # /var/tmp (2026.08.1): el TERCERO de los directorios escribibles por todos, y el unico que
+  # SOBREVIVE AL REINICIO. El catalogo cubria /tmp y /dev/shm y se dejaba este, que es justo el
+  # que elige una carga que quiere persistir: /tmp suele ser tmpfs y se vacia al arrancar.
+  - id: FS-07
+    category: FS
+    os: linux
+    tier: deep
+    description: "/var/tmp es escribible por cualquier usuario igual que /tmp, pero con una diferencia que importa: su contenido sobrevive al reinicio. Montarlo con noexec impide ejecutar desde ahí lo que se haya dejado caer, que es donde suele acabar una carga que busca persistir."
+    read: { type: exec, cmd: ["findmnt", "-no", "OPTIONS", "/var/tmp"] }
+    comparator: regex
+    expected: { good: "noexec" }
+    points: 2
+    severity: medium
+    criticality: MEDIA
+    requiresPrivilege: false
+    remediation: "Monta /var/tmp como partición separada (o como bind de /tmp) con las opciones nodev,nosuid,noexec en /etc/fstab, y vuelve a montarlo con `mount -o remount /var/tmp`. En systemd existe la unidad var-tmp.mount."
+    ensControls: ["op.exp.2"]
+    syntaxConfidence: review
+
+  - id: FS-08
+    category: FS
+    os: linux
+    tier: deep
+    description: "Un binario con bit SUID en /var/tmp permitiría a un usuario sin privilegios ejecutarlo con los del dueño, normalmente root. Montar /var/tmp con nosuid anula ese bit para todo lo que haya dentro."
+    read: { type: exec, cmd: ["findmnt", "-no", "OPTIONS", "/var/tmp"] }
+    comparator: regex
+    expected: { good: "nosuid" }
+    points: 2
+    severity: medium
+    criticality: MEDIA
+    requiresPrivilege: false
+    remediation: "Añade nosuid a las opciones de montaje de /var/tmp en /etc/fstab y vuelve a montarlo con `mount -o remount /var/tmp`."
+    ensControls: ["op.exp.2"]
+    syntaxConfidence: review
+
+  # (2026.08.1) El permiso de /etc/shadow, que es la comprobacion de fichero mas clasica que
+  # faltaba: ahi viven los hashes de contraseña de todas las cuentas, y basta que sea legible por
+  # el grupo o por todos para que cualquier usuario del equipo se los lleve a romper offline.
+  - id: FS-09
+    category: FS
+    os: linux
+    tier: core
+    description: "El fichero /etc/shadow guarda los hashes de contraseña de todas las cuentas. Si es legible por el grupo o por el resto de usuarios, cualquiera con acceso al equipo puede copiarlo y romper las contraseñas sin conexión y sin dejar rastro."
+    read: { type: exec, cmd: ["stat", "-c", "%a", "/etc/shadow"] }
+    comparator: in
+    expected: { good: ["0", "600", "640", "400", "440"] }
+    points: 4
+    severity: high
+    criticality: ALTA
+    requiresPrivilege: true
+    remediation: "Devuelve a /etc/shadow sus permisos restrictivos con `chown root:shadow /etc/shadow` y `chmod 640 /etc/shadow` (en distribuciones sin grupo shadow, `chown root:root` y `chmod 600`)."
+    ensControls: ["op.acc.6", "mp.info.3"]
+    syntaxConfidence: review

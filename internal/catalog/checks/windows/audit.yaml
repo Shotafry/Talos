@@ -30,3 +30,24 @@ checks:
     remediation: 'Activa por GPO la directiva "Incluir linea de comandos en eventos de creacion de procesos" o pon ProcessCreationIncludeCmdLine_Enabled=1 en HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System\Audit. Recuerda que también debe estar auditada la creacion de procesos para generar el evento 4688.'
     ensControls: ["op.exp.8"]
     syntaxConfidence: high
+
+  # (2026.08.1) EL TAMAÑO DEL REGISTRO DE SEGURIDAD. Es el complemento de WIN-AUD-01 y WIN-AUD-02 y
+  # el que decide si sirven de algo: con el valor de fabrica (20 MB) un servidor con auditoria de
+  # procesos activada rota su registro en horas, asi que la evidencia de un incidente de anteayer ya
+  # no existe cuando alguien va a buscarla. Registrar mas y guardar menos es peor que no registrar,
+  # porque da por cubierto lo que no lo esta.
+  - id: WIN-AUD-03
+    category: AUDIT
+    os: windows
+    tier: core
+    description: "El registro de seguridad tiene un tamaño máximo y, al llenarse, sobrescribe lo más antiguo. Con el valor de fábrica y la auditoría de procesos activada, un servidor puede rotar su registro en horas: cuando alguien va a investigar un incidente de anteayer, ya no queda nada."
+    read: { type: cmdlet, cmd: ["[int]((Get-WinEvent -ListLog Security).MaximumSizeInBytes / 1MB)"] }
+    comparator: ge
+    expected: { good: "196" }
+    points: 3
+    severity: medium
+    criticality: MEDIA
+    requiresPrivilege: true
+    remediation: 'Sube el tamaño máximo del registro de seguridad a 200 MB o más (`Limit-EventLog -LogName Security -MaximumSize 200MB`, o por GPO en Configuración del equipo > Directivas > Plantillas administrativas > Componentes de Windows > Servicio de registro de eventos > Seguridad). Si envías los eventos a un colector central, ajústalo a lo que tarde en recogerlos.'
+    ensControls: ["op.exp.8", "op.mon.1"]
+    syntaxConfidence: review

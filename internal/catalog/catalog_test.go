@@ -20,7 +20,7 @@ func mustParseMetaForTest(t *testing.T) Meta {
 
 func TestMetaParses(t *testing.T) {
 	m := mustParseMetaForTest(t)
-	if m.Version != "2026.06.3" {
+	if m.Version != "2026.08.1" {
 		t.Fatalf("version: %q", m.Version)
 	}
 	if m.SchemaVersion != 1 {

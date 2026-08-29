@@ -68,6 +68,6 @@ checks:
       anyOf:
         - { service: "auditd" }
     requiresPrivilege: true
-    remediation: "Coloca un conjunto de reglas en /etc/audit/rules.d/ (por ejemplo la base recomendada por CIS) y aplícalas con `augenrules --load`."
+    remediation: "Coloca un fichero de reglas en /etc/audit/rules.d/ y cárgalo con `augenrules --load`. Como base conviene vigilar los ficheros de identidad (/etc/passwd, /etc/shadow, /etc/group, /etc/sudoers), la carga y descarga de módulos del kernel (init_module, delete_module), los montajes y los cambios de hora del sistema (settimeofday, clock_settime): por ahí pasan las altas de usuario encubiertas, los rootkit y el borrado de la cronología de un incidente. Termina el fichero con `-e 2` para dejar las reglas inmutables hasta el próximo reinicio."
     ensControls: ["op.exp.8"]
     syntaxConfidence: review

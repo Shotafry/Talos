@@ -33,7 +33,8 @@ que patrulla cada máquina y audita su seguridad.
   paquete...) a través de una **lista blanca** de lecturas. Sin shell arbitraria,
   sin remediación automática: la remediación es un consejo en texto.
 - **Una nota clara.** Índice 0-100 ponderado; los "no aplica" no penalizan.
-  Bandas rojo (<50) / amarillo (50-79) / verde (>=80), global y por categoría.
+  Color por banda (rojo <50 / amarillo 50-79 / verde >=80) y nivel legible:
+  Deficiente / Moderado / Bueno / Excelente (>=90), global y por categoría.
 - **Repertorio propio de vulnerabilidades críticas por versión** (Linux): reglas
   **escritas y verificadas a mano** contra los *security trackers* de Debian y
   Ubuntu. Detectan paquetes sin parchear comparando con la versión corregida **por

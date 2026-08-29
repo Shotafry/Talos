@@ -78,3 +78,24 @@ checks:
     remediation: 'Aplica la directiva poniendo NoDriveTypeAutoRun=0xFF (255) por GPO en Plantillas administrativas > Componentes de Windows > Directivas de reproducción automática > Desactivar reproducción automática, seleccionando todas las unidades.'
     ensControls: ["mp.com.1", "op.exp.2"]
     syntaxConfidence: high
+
+  # (2026.08.1) El MOTOR v2 DE POWERSHELL, que es el hueco que deja WIN-SYS-04. El registro de
+  # bloques de script y AMSI viven en PowerShell 5; el motor v2 sigue instalado en muchos equipos y
+  # **no pasa por ninguno de los dos**, asi que arrancar con `powershell -Version 2` desactiva de un
+  # golpe la vigilancia que el catalogo ya comprobaba. Registrar la ejecucion y dejar abierta la
+  # puerta que la esquiva es justo la clase de defensa que parece puesta y no lo esta.
+  - id: WIN-SYS-06
+    category: SYSTEM
+    os: windows
+    tier: core
+    description: "El motor de PowerShell version 2 sigue instalado en muchos equipos y no pasa por el registro de bloques de script ni por AMSI. Mientras esté disponible, basta arrancar PowerShell pidiendo esa versión para ejecutar sin dejar rastro ni ser inspeccionado."
+    read: { type: cmdlet, cmd: ["(Get-WindowsOptionalFeature -Online -FeatureName MicrosoftWindowsPowerShellV2Root).State"] }
+    comparator: in
+    expected: { good: ["Disabled", "DisabledWithPayloadRemoved"] }
+    points: 4
+    severity: high
+    criticality: ALTA
+    requiresPrivilege: true
+    remediation: 'Desinstala el motor v2 con `Disable-WindowsOptionalFeature -Online -FeatureName MicrosoftWindowsPowerShellV2Root`. Comprueba antes que ningún script heredado lo necesite: los que lo piden llevan `-Version 2` en su linea de arranque.'
+    ensControls: ["op.exp.2", "op.mon.1"]
+    syntaxConfidence: review

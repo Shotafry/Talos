@@ -38,8 +38,9 @@ checks:
     description: "Sin bloqueo de cuenta, un atacante puede probar contraseñas sin limite hasta dar con la buena. Bloquear tras unos pocos intentos fallidos (entre 1 y 5) corta los ataques de fuerza bruta en seco."
     read: { type: netaccounts, key: lockoutThreshold }
     comparator: range
-    # 1-5 intentos = bueno (alineado con CIS); 6-10 = aceptable pero flojo (WARN); 0 = sin
-    # bloqueo o >10 = FAIL.
+    # 1-5 intentos = bueno (corta la fuerza bruta antes de que sea rentable, y un usuario
+    # que se equivoca al teclear rara vez pasa de ahi); 6-10 = aceptable pero flojo (WARN);
+    # 0 = sin bloqueo o >10 = FAIL.
     expected: { good: "[1,5]", medium: "[6,10]" }
     points: 5
     severity: medium

@@ -33,3 +33,23 @@ checks:
     remediation: "Programa un reinicio en una ventana de mantenimiento para aplicar los parches pendientes; si necesitas evitar el reinicio, valora el parcheo del kernel en caliente (livepatch/kpatch)."
     ensControls: ["op.exp.4"]
     syntaxConfidence: high
+
+  # (2026.08.1) La ACTUALIZACION AUTOMATICA de seguridad. El catalogo sabia decir si quedaban
+  # parches pendientes (UPD-01) y si hacia falta reiniciar (UPD-02), pero no si el equipo se
+  # actualiza SOLO. Es la diferencia entre enterarse de la deuda y no volver a contraerla, y en una
+  # flota que nadie parchea a mano cada semana es la unica que aguanta.
+  - id: UPD-03
+    category: UPDATES
+    os: linux
+    tier: core
+    description: "Comprueba si el equipo instala por su cuenta las actualizaciones de seguridad. Sin esto, cada parche depende de que alguien se acuerde, y la ventana entre que un fallo se hace público y se corrige en este equipo se mide en semanas."
+    read: { type: exec, cmd: ["sh", "-c", "systemctl is-enabled unattended-upgrades.service dnf-automatic.timer dnf-automatic-install.timer yum-cron.service 2>/dev/null | grep -c enabled"] }
+    comparator: ge
+    expected: { good: "1" }
+    points: 3
+    severity: high
+    criticality: ALTA
+    requiresPrivilege: false
+    remediation: "En Debian y Ubuntu, instala `unattended-upgrades` y actívalo con `dpkg-reconfigure -plow unattended-upgrades`. En RHEL y derivados, instala `dnf-automatic` y habilita `dnf-automatic-install.timer`."
+    ensControls: ["op.exp.4"]
+    syntaxConfidence: review
