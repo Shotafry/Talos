@@ -1,33 +1,40 @@
-# Creditos e inspiracion
+# Créditos y procedencia
 
-Talos es una implementacion **propia y desde cero**. No reutiliza ni copia codigo
-de ningun otro proyecto. Lo que aprovecha es **conocimiento publico** de la
-disciplina de bastionado de sistemas:
+Talos es una implementación propia y escrita desde cero. No reutiliza ni copia código de ningún
+otro proyecto. Lo que sí aprovecha, porque sería absurdo no hacerlo, es el conocimiento público de
+la disciplina del bastionado de sistemas.
 
-- **Metodologia de bastionado del sector.** Guias publicas de configuracion segura
-  de servidores y estaciones (lineas base de hardening), de donde provienen los
-  *hechos* que cada check verifica (no su implementacion).
-- **Documentacion oficial de los fabricantes.** Claves de registro y directivas de
-  Microsoft, parametros del kernel de Linux (`sysctl`), opciones de servicios
-  (SSH, cortafuegos, etc.) tomadas de su documentacion oficial.
-- **Repositorios publicos de seguimiento de vulnerabilidades.** Para el pack de
-  vulnerabilidades por version, las versiones corregidas por distribucion y
-  release se toman de los *security trackers* publicos de las distribuciones.
-- **Patrones consolidados de la disciplina.** Resumir la postura en un **indice**
-  numerico y tratar las comprobaciones como **datos versionables** son ideas
-  ampliamente usadas en herramientas de auditoria; Talos las reimplementa a su
-  manera.
+De la **metodología del sector** vienen los *hechos* que cada comprobación verifica: que el
+acceso remoto como root deja el sistema sin trazabilidad, que un `/tmp` ejecutable es media cadena
+de ataque. Son las guías públicas de configuración segura de servidores y estaciones, las líneas
+base que circulan desde hace veinte años. Vienen los hechos, no la redacción ni la
+implementación, que son de Talos.
+
+Los **valores concretos** salen de la documentación oficial de quien hace el software. Las claves
+de registro y las directivas las publica Microsoft, y los parámetros del kernel (`sysctl`), la
+documentación de Linux. Las opciones de cada servicio (SSH, el cortafuegos, el registro de
+auditoría) salen de la documentación de ese servicio.
+
+Para las comprobaciones de **vulnerabilidades por versión**, la versión corregida de cada paquete
+en cada distribución y release se toma de los *security trackers* públicos de las propias
+distribuciones, que es el único sitio donde ese dato está bien.
+
+Y hay dos **patrones consolidados** que Talos reimplementa a su manera porque son de todos:
+resumir la postura de una máquina en un índice numérico, y tratar las comprobaciones como datos
+versionables en lugar de como código.
 
 ## Dependencias de software
 
-- **Go** (biblioteca estandar) - lenguaje y runtime.
-- **gopkg.in/yaml.v3** - parseo del catalogo YAML.
+Solo dos, las dos deliberadamente aburridas:
 
-El algoritmo de comparacion de versiones estilo `dpkg` (deb-version) es una
-reimplementacion limpia del algoritmo **publico** documentado, no una copia de
-codigo.
+- **Go**, con su biblioteca estándar, como lenguaje y como runtime.
+- **gopkg.in/yaml.v3** para leer el catálogo.
+
+El algoritmo de comparación de versiones estilo `dpkg` es una reimplementación limpia del
+algoritmo público documentado, no una copia de código. Maneja epoch, pre-release y segmentos
+alfanuméricos, y tiene sus pruebas contra salida real.
 
 ## Marca
 
-"Talos" toma el nombre del automata de bronce de la mitologia griega, guardian
-de Creta. Talos forma parte de una plataforma de seguridad mayor (*by argos*).
+Talos toma el nombre del autómata de bronce de la mitología griega, el guardián de Creta. Forma
+parte de una plataforma de seguridad mayor (*by argos*).

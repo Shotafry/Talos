@@ -19,7 +19,7 @@ checks:
     category: USERS
     os: windows
     tier: deep
-    description: "Una contraseña que nunca caduca puede seguir siendo valida años despues de filtrarse. Acotar su vida util obliga a renovarla y limita la ventana de un robo no detectado."
+    description: "Una contraseña que nunca caduca puede seguir siendo válida años después de filtrarse. Acotar su vida útil obliga a renovarla y limita la ventana de un robo no detectado."
     read: { type: netaccounts, key: maxPwAge }
     comparator: le
     expected: { good: "365" }
@@ -35,7 +35,7 @@ checks:
     category: USERS
     os: windows
     tier: core
-    description: "Sin bloqueo de cuenta, un atacante puede probar contraseñas sin limite hasta dar con la buena. Bloquear tras unos pocos intentos fallidos (entre 1 y 5) corta los ataques de fuerza bruta en seco."
+    description: "Sin bloqueo de cuenta, un atacante puede probar contraseñas sin límite hasta dar con la buena. Bloquear tras unos pocos intentos fallidos (entre 1 y 5) corta los ataques de fuerza bruta en seco."
     read: { type: netaccounts, key: lockoutThreshold }
     comparator: range
     # 1-5 intentos = bueno (corta la fuerza bruta antes de que sea rentable, y un usuario

@@ -25,9 +25,16 @@ import (
 	"github.com/Shotafry/talos/internal/update"
 )
 
-// version se inyecta al compilar via -ldflags "-X .../internal/cli.version=<tag>"
+// version se inyecta al compilar via -ldflags "-X .../internal/cli.version=<tag>". El valor de
+// aqui es el que sale cuando nadie la inyecta, y es la version PUBLICADA de Talos.
+//
+// No es la version de Argos, y hasta la 1.5.1 lo era: `scripts/build.sh` la sacaba de
+// `git describe --tags`, que dentro del monorepo devuelve el tag de ARGOS. Los binarios que
+// Argos sirve a sus agentes se identificaban como "talos 0.42.2" en la cabecera de cada informe
+// y en el campo talosVersion que se ingiere. `talos-publish/publish.sh` no publica si esta
+// constante no coincide con la version que se esta publicando.
 // (fuente unica de verdad: el tag git del repo). En build local sin tag vale "dev".
-var version = "dev"
+var version = "1.5.1"
 
 // Run es el entry de la CLI. Devuelve el exit code: 0 ok, 1 hay FAIL high/critical,
 // 2 error de uso, 3 error de catalogo.

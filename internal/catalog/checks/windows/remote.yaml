@@ -3,7 +3,7 @@ checks:
     category: RDP
     os: windows
     tier: core
-    description: "Cuando el Escritorio remoto está habilitado, NLA obliga al usuario a autenticarse antes de que se cree la sesión, lo que protege el servidor frente a ataques previos al inicio de sesión y reduce la exposición a fuerza bruta. Si RDP está activo, debe exigir autenticación a nivel de red."
+    description: "Con el Escritorio remoto habilitado, NLA obliga a autenticarse antes de que se cree la sesión. Eso deja fuera los ataques que no necesitan una sesión iniciada y reduce la exposición a la fuerza bruta. Si RDP está activo, debe exigir autenticación a nivel de red."
     read: { type: registry, path: 'HKLM\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp', name: 'UserAuthentication' }
     comparator: eq
     expected: { good: "1" }

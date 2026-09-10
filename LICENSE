@@ -1,37 +1,38 @@
 Licencia de Talos - Todos los derechos reservados
 Copyright (c) 2026 Shotafry (autor de Talos). Reservados todos los derechos.
 
-Talos ("el Software") es un motor de auditoria de bastionado. Esta licencia
-regula su uso mientras el titular no publique terminos distintos (el titular
+Talos ("el Software") es un motor de auditoría de bastionado. Esta licencia
+regula su uso mientras el titular no publique términos distintos (el titular
 puede relicenciar el Software en cualquier momento, p.ej. bajo una licencia de
-codigo abierto).
+código abierto).
 
-1. Concesion de uso.
+1. Concesión de uso.
    Se permite descargar, instalar, ejecutar y evaluar el Software (en sus
-   formas binaria y de codigo) con fines de auditoria de seguridad propios o de
+   formas binaria y de código) con fines de auditoría de seguridad propios o de
    terceros para los que se preste un servicio, SIN coste.
 
 2. Prohibiciones.
-   Salvo autorizacion previa y por escrito del titular, queda PROHIBIDO:
+   Salvo autorización previa y por escrito del titular, queda PROHIBIDO:
    a) Comercializar el Software: venderlo, alquilarlo, sublicenciarlo, ofrecerlo
       como producto o como servicio de pago, o incluirlo en una oferta comercial.
-   b) Copiar, reutilizar o incorporar su codigo fuente (total o parcialmente) en
+   b) Copiar, reutilizar o incorporar su código fuente (total o parcialmente) en
       otro proyecto, producto u obra.
    c) Redistribuir el Software (binario o fuente), publicarlo o crear obras
-      derivadas a partir de el.
-   d) Eliminar u ocultar los avisos de autoria y de licencia.
+      derivadas a partir de él.
+   d) Eliminar u ocultar los avisos de autoría y de licencia.
 
-3. Catalogo de comprobaciones.
-   El catalogo de checks (ficheros de datos) forma parte del Software y queda
-   sujeto a esta misma licencia.
+3. Catálogo de comprobaciones.
+   El catálogo de comprobaciones (ficheros de datos) forma parte del Software y
+   queda sujeto a esta misma licencia.
 
-4. Sin garantia.
-   EL SOFTWARE SE PROPORCIONA "TAL CUAL", SIN GARANTIA DE NINGUN TIPO, EXPRESA O
-   IMPLICITA. EL TITULAR NO RESPONDE DE NINGUN DANO DERIVADO DEL USO DEL SOFTWARE.
-   Talos audita en modo de SOLO LECTURA y no modifica el sistema, pero su uso es
-   responsabilidad de quien lo ejecuta.
+4. Sin garantía.
+   EL SOFTWARE SE PROPORCIONA "TAL CUAL", SIN GARANTÍA DE NINGÚN TIPO, EXPRESA O
+   IMPLÍCITA. EL TITULAR NO RESPONDE DE NINGÚN DAÑO DERIVADO DEL USO DEL
+   SOFTWARE. Talos audita en modo de SOLO LECTURA y no modifica el sistema, pero
+   su uso es responsabilidad de quien lo ejecuta.
 
 5. Reserva de derechos.
    Cualquier derecho no concedido expresamente queda reservado al titular.
 
-Para usos no contemplados (incluida la comercializacion), contacta con el titular.
+Para usos no contemplados (incluida la comercialización), contacta con el
+titular.

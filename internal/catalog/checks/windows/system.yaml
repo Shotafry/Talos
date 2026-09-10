@@ -88,7 +88,7 @@ checks:
     category: SYSTEM
     os: windows
     tier: core
-    description: "El motor de PowerShell version 2 sigue instalado en muchos equipos y no pasa por el registro de bloques de script ni por AMSI. Mientras esté disponible, basta arrancar PowerShell pidiendo esa versión para ejecutar sin dejar rastro ni ser inspeccionado."
+    description: "El motor de PowerShell versión 2 sigue instalado en muchos equipos y no pasa por el registro de bloques de script ni por AMSI. Mientras esté disponible, basta arrancar PowerShell pidiendo esa versión para ejecutar sin dejar rastro ni ser inspeccionado."
     read: { type: cmdlet, cmd: ["(Get-WindowsOptionalFeature -Online -FeatureName MicrosoftWindowsPowerShellV2Root).State"] }
     comparator: in
     expected: { good: ["Disabled", "DisabledWithPayloadRemoved"] }
@@ -96,6 +96,6 @@ checks:
     severity: high
     criticality: ALTA
     requiresPrivilege: true
-    remediation: 'Desinstala el motor v2 con `Disable-WindowsOptionalFeature -Online -FeatureName MicrosoftWindowsPowerShellV2Root`. Comprueba antes que ningún script heredado lo necesite: los que lo piden llevan `-Version 2` en su linea de arranque.'
+    remediation: 'Desinstala el motor v2 con `Disable-WindowsOptionalFeature -Online -FeatureName MicrosoftWindowsPowerShellV2Root`. Comprueba antes que ningún script heredado lo necesite: los que lo piden llevan `-Version 2` en su línea de arranque.'
     ensControls: ["op.exp.2", "op.mon.1"]
     syntaxConfidence: review
