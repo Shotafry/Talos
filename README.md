@@ -96,15 +96,16 @@ No necesitas tener Go ni nada más. Coge el de tu sistema de la página de
 **Linux** (`amd64` para PC y servidor Intel/AMD, `arm64` para ARM):
 
 ```bash
-# 1. descarga el binario
-curl -fL -o talos https://github.com/Shotafry/Talos/releases/latest/download/talos-linux-amd64
+# 1. descárgalo con su nombre. La -O es mayúscula a propósito: las huellas van por ese nombre y
+#    si lo renombras aquí, el paso 2 no comprueba nada
+curl -fL -O https://github.com/Shotafry/Talos/releases/latest/download/talos-linux-amd64
 
 # 2. (recomendado) verifica que no se ha corrompido ni manipulado
-curl -fL -o SHA256SUMS https://github.com/Shotafry/Talos/releases/latest/download/SHA256SUMS
+curl -fL -O https://github.com/Shotafry/Talos/releases/latest/download/SHA256SUMS
 sha256sum --ignore-missing -c SHA256SUMS        # debe decir: talos-linux-amd64: OK
 
-# 3. dale permiso de ejecución (es un BINARIO, no un script: no lo renombres a .sh ni uses 'bash')
-chmod +x talos
+# 3. permiso de ejecución y nombre corto (es un BINARIO, no un script: no lo llames .sh ni uses 'bash')
+chmod +x talos-linux-amd64 && mv talos-linux-amd64 talos
 
 # 4. ejecútalo. Si no lo pones en el PATH, llámalo con ./ delante
 ./talos audit
@@ -116,11 +117,13 @@ sudo mv talos /usr/local/bin/talos && talos audit
 **Windows** (PowerShell; `amd64` para la mayoría de equipos, `arm64` para ARM):
 
 ```powershell
-# 1. descarga el binario
+# 1. descarga el binario y el fichero de huellas
 Invoke-WebRequest -Uri "https://github.com/Shotafry/Talos/releases/latest/download/talos-windows-amd64.exe" -OutFile "talos.exe"
+Invoke-WebRequest -Uri "https://github.com/Shotafry/Talos/releases/latest/download/SHA256SUMS" -OutFile "SHA256SUMS"
 
-# 2. (recomendado) compara el hash con el de la línea "talos-windows-amd64.exe" del fichero SHA256SUMS de la release
-Get-FileHash .\talos.exe -Algorithm SHA256
+# 2. (recomendado) las dos órdenes tienen que dar el mismo hash
+(Get-FileHash .\talos.exe -Algorithm SHA256).Hash.ToLower()
+(Select-String -Path .\SHA256SUMS -Pattern "talos-windows-amd64.exe").Line.Split()[0]
 
 # 3. ejecútalo (abre PowerShell "como administrador" para cobertura total)
 .\talos.exe audit
@@ -197,6 +200,12 @@ opciones de audit:
 
 El código de salida sirve para un script o para CI: `0` si todo bien, `1` si hay algún fallo de
 severidad alta o crítica.
+
+`talos update` deja el catálogo en `/var/lib/talos` (en Windows, `%ProgramData%\Talos`), así que
+pide root o Administrador. Sin privilegios, dile dónde escribirlo con
+`TALOS_DATA_DIR=~/.talos talos update` y pasa la misma variable en los `audit` siguientes para
+que lo use; si ese catálogo no carga por lo que sea, el binario sigue adelante con el que lleva
+embebido.
 
 ## Fichas del catálogo
 

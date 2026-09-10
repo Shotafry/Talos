@@ -1,6 +1,11 @@
 # CI de Talos (repo extraido). Al empujar un tag vX.Y.Z: prueba, compila para
 # Linux/Windows (amd64/arm64), publica binarios + SHA256SUMS + catalog.tar.gz en la release.
 # En el monorepo de origen este workflow no se dispara (vive bajo tools/talos/.github/).
+#
+# Las acciones van pinchadas por SHA con su version en el comentario, como en el monorepo: un tag
+# de accion se puede mover al commit que quiera su autor, un SHA no. Para subir una, el SHA sale
+# de `gh api repos/<owner>/<accion>/git/ref/tags/<tag> -q .object.sha` (si el ref es un tag
+# anotado, hay que dereferenciarlo con `git/tags/<sha>`).
 name: release
 
 on:
@@ -16,8 +21,8 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with: { go-version: "1.24" }
       - run: go vet ./...
       - run: go test ./...
@@ -27,8 +32,8 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with: { go-version: "1.24" }
       - name: Compilar binarios
         run: |
@@ -46,7 +51,7 @@ jobs:
           tar -C internal/catalog -czf dist/catalog.tar.gz checks
           ( cd dist && sha256sum catalog.tar.gz > catalog.tar.gz.sha256 )
       - name: Publicar release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
         with:
           files: |
             dist/talos-*

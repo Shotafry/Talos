@@ -33,8 +33,7 @@ import (
 // Argos sirve a sus agentes se identificaban como "talos 0.42.2" en la cabecera de cada informe
 // y en el campo talosVersion que se ingiere. `talos-publish/publish.sh` no publica si esta
 // constante no coincide con la version que se esta publicando.
-// (fuente unica de verdad: el tag git del repo). En build local sin tag vale "dev".
-var version = "1.5.1"
+var version = "1.5.2"
 
 // Run es el entry de la CLI. Devuelve el exit code: 0 ok, 1 hay FAIL high/critical,
 // 2 error de uso, 3 error de catalogo.
