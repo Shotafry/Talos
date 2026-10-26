@@ -5,7 +5,7 @@
 # Talos
 
 Talos audita el bastionado (*hardening*) de un equipo y le pone nota. Lee cómo está configurada
-la máquina, compara ese estado con un catálogo de 147 comprobaciones y devuelve un índice de 0 a
+la máquina, compara ese estado con un catálogo de 156 comprobaciones y devuelve un índice de 0 a
 100 con la lista de lo que falla y de cómo se arregla cada cosa. Es un binario suelto, sin
 dependencias, sin servidor y sin cuenta: el informe se genera y se queda donde se ejecutó. **Solo
 lee. No modifica el sistema.**
@@ -33,7 +33,7 @@ Creta. Este es el que patrulla máquinas.
 
 ## Alcance
 
-El catálogo son **147 comprobaciones**. Ciento nueve de Linux, repartidas en doce categorías
+El catálogo son **156 comprobaciones**. Ciento dieciocho de Linux, repartidas en doce categorías
 (acceso SSH, endurecimiento del kernel, cortafuegos, cuentas, puertos a la escucha,
 actualizaciones, control de acceso obligatorio, registro y auditoría, sistema de ficheros,
 servicios, hora y condiciones de explotabilidad), y treinta y ocho de Windows en once
@@ -44,16 +44,23 @@ Cada comprobación es una ficha en YAML con qué hay que leer, qué valor se con
 cuántos puntos vale, su severidad y el texto de la remediación. Añadir una es escribir una ficha,
 no tocar código, y por eso el catálogo se puede actualizar sin recompilar nada.
 
-Trece de esas fichas no miran configuración sino versiones de paquete. Buscan vulnerabilidades
-críticas concretas, del tipo PwnKit, Looney Tunables, regreSSHion, sudoedit o glibc iconv, y para
-cada una la versión corregida está anotada **por distribución y release**, copiada a mano de los
-*security trackers* de Debian y de Ubuntu para que un backport no cuente como vulnerable. Son el
-músculo del uso suelto: en una máquina sin escáner ni conexión, esas trece son las que encuentran
-algo explotable hoy.
+Dieciocho de esas fichas no miran configuración sino versiones de paquete. Buscan vulnerabilidades
+críticas concretas, del tipo PwnKit, Looney Tunables, regreSSHion, sudoedit, glibc iconv o
+php2shell, y para cada una la versión corregida está anotada **por distribución y release**,
+copiada a mano de los *security trackers* de Debian y de Ubuntu para que un backport no cuente como
+vulnerable. Otras dos miran la versión de PHP y de Node.js instalados fuera del gestor de paquetes
+(las imágenes oficiales de Docker y los binarios del proyecto), rama por rama. Son el músculo del
+uso suelto: en una máquina sin escáner ni conexión, esas veinte son las que encuentran algo
+explotable hoy.
 
-Los perfiles deciden cuántas se ejecutan. `core`, el de por defecto, corre 51 y tarda un par de
+Y dos más miran si el almacén de certificados del sistema todavía confía en las raíces de eMudhra
+(emSign ECC Root CA - G3 y AAA Certificate Services). Sus intermedios tienen la clave privada al
+descubierto y permiten fabricar un certificado válido para cualquier web. Se mira el almacén y no la
+versión de `ca-certificates`, así que vale en cualquier distribución.
+
+Los perfiles deciden cuántas se ejecutan. `core`, el de por defecto, corre 53 y tarda un par de
 segundos. `full` corre el catálogo entero, con las de versión incluidas. Y `critical` deja solo
-las de severidad alta o crítica, que en el catálogo son 52 (40 de Linux y 12 de Windows) y es lo
+las de severidad alta o crítica, que en el catálogo son 61 (49 de Linux y 12 de Windows) y es lo
 que interesa en un pipeline.
 
 En Windows solo audita. Lee el registro, las directivas y el estado de Defender, explica lo que

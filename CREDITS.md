@@ -1,40 +1,47 @@
 # Créditos y procedencia
 
-Talos es una implementación propia y escrita desde cero. No reutiliza ni copia código de ningún
-otro proyecto. Lo que sí aprovecha, porque sería absurdo no hacerlo, es el conocimiento público de
-la disciplina del bastionado de sistemas.
+Talos es un motor de auditoría de bastionado escrito desde cero. No incorpora código de otros
+proyectos más allá de las dos dependencias que se indican abajo.
 
-De la **metodología del sector** vienen los *hechos* que cada comprobación verifica: que el
-acceso remoto como root deja el sistema sin trazabilidad, que un `/tmp` ejecutable es media cadena
-de ataque. Son las guías públicas de configuración segura de servidores y estaciones, las líneas
-base que circulan desde hace veinte años. Vienen los hechos, no la redacción ni la
-implementación, que son de Talos.
+## Procedencia del catálogo de comprobaciones
 
-Los **valores concretos** salen de la documentación oficial de quien hace el software. Las claves
-de registro y las directivas las publica Microsoft, y los parámetros del kernel (`sysctl`), la
-documentación de Linux. Las opciones de cada servicio (SSH, el cortafuegos, el registro de
-auditoría) salen de la documentación de ese servicio.
+Cada comprobación verifica un **hecho técnico público**: por ejemplo, que el acceso remoto como
+`root` impide saber quién actuó, o que un `/tmp` con permiso de ejecución facilita un ataque. Esos
+hechos forman parte del conocimiento común de la disciplina del bastionado. La redacción de cada
+comprobación, su identificador, su agrupación y su implementación son propias de Talos.
 
-Para las comprobaciones de **vulnerabilidades por versión**, la versión corregida de cada paquete
-en cada distribución y release se toma de los *security trackers* públicos de las propias
-distribuciones, que es el único sitio donde ese dato está bien.
+Los valores concretos se toman de la documentación oficial de cada fabricante o proyecto:
 
-Y hay dos **patrones consolidados** que Talos reimplementa a su manera porque son de todos:
-resumir la postura de una máquina en un índice numérico, y tratar las comprobaciones como datos
-versionables en lugar de como código.
+- **Windows**: claves de registro y directivas, de la documentación de Microsoft.
+- **Linux**: parámetros del núcleo (`sysctl`), de la documentación del núcleo de Linux.
+- **Servicios** (SSH, cortafuegos, registro de auditoría y otros): de la documentación de cada
+  servicio.
+- **Vulnerabilidades por versión**: la versión corregida de cada paquete, de los avisos de
+  seguridad públicos de cada distribución.
+
+Talos también aplica dos prácticas habituales del sector, implementadas de forma propia: resumir
+la postura de un equipo en un índice numérico y tratar las comprobaciones como datos versionados
+en lugar de como código.
+
+## Guías de configuración de terceros
+
+Talos no reproduce el texto, la numeración, la estructura ni la marca de ninguna guía de
+configuración segura publicada por terceros. En particular, **no reproduce contenido de los CIS
+Benchmarks**, que se distribuyen bajo la licencia CC BY-NC-SA 4.0, incompatible con un producto
+comercial. Una comprobación de Talos puede verificar el mismo hecho técnico que una de esas guías,
+porque el hecho es público, pero lo describe y lo identifica con sus propios términos.
 
 ## Dependencias de software
 
-Solo dos, las dos deliberadamente aburridas:
+| Componente | Licencia | Uso |
+| --- | --- | --- |
+| Go y su biblioteca estándar | BSD-3-Clause | Lenguaje y entorno de ejecución |
+| `gopkg.in/yaml.v3` | MIT y Apache-2.0 | Lectura del catálogo |
 
-- **Go**, con su biblioteca estándar, como lenguaje y como runtime.
-- **gopkg.in/yaml.v3** para leer el catálogo.
+La comparación de versiones de paquetes al estilo de `dpkg` (época, versiones preliminares y
+segmentos alfanuméricos) es una implementación propia del algoritmo público documentado, probada
+contra salida real.
 
-El algoritmo de comparación de versiones estilo `dpkg` es una reimplementación limpia del
-algoritmo público documentado, no una copia de código. Maneja epoch, pre-release y segmentos
-alfanuméricos, y tiene sus pruebas contra salida real.
+## Nombre
 
-## Marca
-
-Talos toma el nombre del autómata de bronce de la mitología griega, el guardián de Creta. Forma
-parte de una plataforma de seguridad mayor (*by argos*).
+Talos toma su nombre del autómata de bronce de la mitología griega que custodiaba Creta.

@@ -272,3 +272,210 @@ checks:
     remediation: "Actualiza OpenSSL: apt-get install --only-upgrade libssl3 (corregido en 3.0.2-0ubuntu1.7)."
     ensControls: ["op.exp.3"]
     syntaxConfidence: review
+
+  # ── OCTUBRE DE 2026 (catalogo 2026.10.1) ─────────────────────────────────────────────────
+  #
+  # php2shell (CVE-2026-109618 y CVE-2026-109619, 21-10-2026): ejecucion de codigo sin autenticar
+  # por memoria mal gestionada entre peticiones de PHP. Version corregida POR DISTRO+RELEASE, del
+  # Debian Security Tracker (DSA-6574-1, DLA-4848-1) y del Ubuntu CVE Tracker, leidos el 2026-10-26.
+  # Se mira `phpX.Y-common`, que llega con cualquier forma de instalar PHP (FPM, CLI o el modulo de
+  # Apache). Debian 11 no aparece en el tracker para esta CVE y no lleva ficha.
+  - id: VULNPKG-PHP2SHELL-DEB12
+    category: VULN
+    os: linux
+    tier: deep
+    description: "php2shell (CVE-2026-109618 y CVE-2026-109619): ejecución remota de código sin autenticar en PHP sin actualizar en Debian 12."
+    read: { type: pkgver, key: "php8.2-common" }
+    comparator: vge
+    expected: { good: "8.2.35-1~deb12u1" }
+    points: 5
+    severity: critical
+    criticality: CRITICA
+    applicability:
+      allOf:
+        - { os: debian }
+        - { release: "12" }
+    requiresPrivilege: false
+    remediation: "Actualiza PHP: apt-get update && apt-get install --only-upgrade 'php8.2*' (corregido en 8.2.35-1~deb12u1) y reinicia PHP-FPM o Apache."
+    ensControls: ["op.exp.3"]
+    syntaxConfidence: review
+
+  - id: VULNPKG-PHP2SHELL-DEB13
+    category: VULN
+    os: linux
+    tier: deep
+    description: "php2shell (CVE-2026-109618 y CVE-2026-109619): ejecución remota de código sin autenticar en PHP sin actualizar en Debian 13."
+    read: { type: pkgver, key: "php8.4-common" }
+    comparator: vge
+    expected: { good: "8.4.27-1~deb13u1" }
+    points: 5
+    severity: critical
+    criticality: CRITICA
+    applicability:
+      allOf:
+        - { os: debian }
+        - { release: "13" }
+    requiresPrivilege: false
+    remediation: "Actualiza PHP: apt-get update && apt-get install --only-upgrade 'php8.4*' (corregido en 8.4.27-1~deb13u1) y reinicia PHP-FPM o Apache."
+    ensControls: ["op.exp.3"]
+    syntaxConfidence: review
+
+  - id: VULNPKG-PHP2SHELL-UB2204
+    category: VULN
+    os: linux
+    tier: deep
+    description: "php2shell (CVE-2026-109618 y CVE-2026-109619): ejecución remota de código sin autenticar en PHP sin actualizar en Ubuntu 22.04."
+    read: { type: pkgver, key: "php8.1-common" }
+    comparator: vge
+    expected: { good: "8.1.2-1ubuntu2.28" }
+    points: 5
+    severity: critical
+    criticality: CRITICA
+    applicability:
+      allOf:
+        - { os: ubuntu }
+        - { release: "22.04" }
+    requiresPrivilege: false
+    remediation: "Actualiza PHP: apt-get update && apt-get install --only-upgrade 'php8.1*' (corregido en 8.1.2-1ubuntu2.28) y reinicia PHP-FPM o Apache."
+    ensControls: ["op.exp.3"]
+    syntaxConfidence: review
+
+  - id: VULNPKG-PHP2SHELL-UB2404
+    category: VULN
+    os: linux
+    tier: deep
+    description: "php2shell (CVE-2026-109618 y CVE-2026-109619): ejecución remota de código sin autenticar en PHP sin actualizar en Ubuntu 24.04."
+    read: { type: pkgver, key: "php8.3-common" }
+    comparator: vge
+    expected: { good: "8.3.6-0ubuntu0.24.04.13" }
+    points: 5
+    severity: critical
+    criticality: CRITICA
+    applicability:
+      allOf:
+        - { os: ubuntu }
+        - { release: "24.04" }
+    requiresPrivilege: false
+    remediation: "Actualiza PHP: apt-get update && apt-get install --only-upgrade 'php8.3*' (corregido en 8.3.6-0ubuntu0.24.04.13) y reinicia PHP-FPM o Apache."
+    ensControls: ["op.exp.3"]
+    syntaxConfidence: review
+
+  - id: VULNPKG-PHP2SHELL-UB2604
+    category: VULN
+    os: linux
+    tier: deep
+    description: "php2shell (CVE-2026-109618 y CVE-2026-109619): ejecución remota de código sin autenticar en PHP sin actualizar en Ubuntu 26.04."
+    read: { type: pkgver, key: "php8.5-common" }
+    comparator: vge
+    expected: { good: "8.5.4-0ubuntu1.5" }
+    points: 5
+    severity: critical
+    criticality: CRITICA
+    applicability:
+      allOf:
+        - { os: ubuntu }
+        - { release: "26.04" }
+    requiresPrivilege: false
+    remediation: "Actualiza PHP: apt-get update && apt-get install --only-upgrade 'php8.5*' (corregido en 8.5.4-0ubuntu1.5) y reinicia PHP-FPM o Apache."
+    ensControls: ["op.exp.3"]
+    syntaxConfidence: review
+
+  # El PHP compilado desde las fuentes (las imagenes oficiales de Docker y las instalaciones a mano,
+  # bajo /usr/local) no tiene version de paquete. Se lee la version de la cabecera que instala junto
+  # al binario, `php_version.h`, y NO ejecutando `php`: la lista blanca de comandos va por binario y
+  # no por argumentos, y permitir `php` dejaria a un catalogo ejecutar cualquier codigo con
+  # `php -r`. Se compara con la primera corregida de CADA rama del aviso del proyecto
+  # (GHSA-w8hw-w9fx-j79w): 8.2.35, 8.3.36, 8.4.27 y 8.5.12. La 8.1 y anteriores no tienen correccion
+  # del proyecto y salen como FAIL. El PHP de la distribucion no se mira asi: lleva el parche por
+  # backport sin subir la version, y para el estan las fichas de arriba.
+  - id: VULNPKG-PHP2SHELL-FUENTES
+    category: VULN
+    os: linux
+    tier: deep
+    description: "php2shell (CVE-2026-109618 y CVE-2026-109619): el PHP instalado en /usr/local, el de las imágenes oficiales y las compilaciones propias, es anterior a la versión corregida de su rama."
+    read: { type: file, path: "/usr/local/include/php/main/php_version.h" }
+    comparator: regex
+    expected: { good: '#define PHP_VERSION "(8\.2\.(3[5-9]|[4-9][0-9]|[0-9]{3,})|8\.3\.(3[6-9]|[4-9][0-9]|[0-9]{3,})|8\.4\.(2[7-9]|[3-9][0-9]|[0-9]{3,})|8\.5\.(1[2-9]|[2-9][0-9]|[0-9]{3,})|8\.([6-9]|[0-9]{2,})\.[0-9]+|(9|[0-9]{2,})\.[0-9]+\.[0-9]+)([^0-9"][^"]*)?"' }
+    points: 5
+    severity: critical
+    criticality: CRITICA
+    applicability:
+      anyOf:
+        - { file: "/usr/local/include/php/main/php_version.h" }
+    requiresPrivilege: false
+    remediation: "Reconstruye la imagen sobre la etiqueta corregida de su rama (php:8.2.35, 8.3.36, 8.4.27 o 8.5.12 en adelante) o recompila PHP desde esas versiones. Una 8.1 o anterior no tiene corrección: hay que subir de rama."
+    ensControls: ["op.exp.3"]
+    syntaxConfidence: review
+
+  # Node.js publicado por el proyecto (las imagenes oficiales y el tarball, bajo /usr/local): la
+  # entrega de seguridad del 21-10-2026 corrige diez CVE (cuatro altas, entre ellas una escritura
+  # fuera de limites en el descompresor Brotli) y quita del almacen de certificados que Node lleva
+  # DENTRO las raices de eMudhra. Primeras corregidas: 22.23.4, 24.22.1 y 26.12.1; las ramas sin
+  # soporte (23, 25 y anteriores a la 22) no tienen correccion y salen como FAIL. Igual que PHP, la
+  # version se lee de la cabecera `node_version.h` y no ejecutando `node`. El Node de la
+  # distribucion no se mira: su version no dice si lleva el parche.
+  - id: VULNPKG-NODE-2026-10-FUENTES
+    category: VULN
+    os: linux
+    tier: deep
+    description: "Node.js instalado en /usr/local anterior a la entrega de seguridad del 21 de octubre de 2026: diez vulnerabilidades, cuatro altas, y un almacén de certificados propio que aún confía en las raíces de eMudhra."
+    read: { type: file, path: "/usr/local/include/node/node_version.h" }
+    comparator: regex
+    expected: { good: 'NODE_MAJOR_VERSION (22\s+#define NODE_MINOR_VERSION (23\s+#define NODE_PATCH_VERSION ([4-9]|[0-9]{2,})|2[4-9]|[3-9][0-9]|[0-9]{3,})|24\s+#define NODE_MINOR_VERSION (22\s+#define NODE_PATCH_VERSION ([1-9]|[0-9]{2,})|2[3-9]|[3-9][0-9]|[0-9]{3,})|26\s+#define NODE_MINOR_VERSION (12\s+#define NODE_PATCH_VERSION ([1-9]|[0-9]{2,})|1[3-9]|[2-9][0-9]|[0-9]{3,})|2[7-9]|[3-9][0-9]|[0-9]{3,})\b' }
+    points: 4
+    severity: high
+    criticality: ALTA
+    applicability:
+      anyOf:
+        - { file: "/usr/local/include/node/node_version.h" }
+    requiresPrivilege: false
+    remediation: "Reconstruye la imagen o instala la versión corregida de la rama: 22.23.4, 24.22.1 o 26.12.1 en adelante. Una rama sin soporte (23, 25 o anterior a la 22) no tiene corrección: hay que pasar a una con soporte."
+    ensControls: ["op.exp.3"]
+    syntaxConfidence: review
+
+  # eMudhra (20-10-2026): ocho intermedios de eMudhra con la clave privada recuperable, que permiten
+  # fabricar certificados validos para cualquier web. Los navegadores ya los rechazan; lo que sigue
+  # aceptandolos es todo lo que confia en el almacen del sistema (PHP, Python, Go, curl...) mientras
+  # tenga las raices de las que cuelgan: emSign ECC Root CA - G3 y AAA Certificate Services. Se mira
+  # el ALMACEN que se usa, no la version de `ca-certificates`: asi vale en cualquier distribucion, y
+  # tambien cuando alguien las quito a mano. Las dos lineas son la primera del certificado de emSign
+  # (la que lleva su numero de serie) y la tercera del de AAA (organizacion y nombre), en base64 tal
+  # como las escribe cualquier almacen PEM; comprobadas el 2026-10-26 contra los certificados de
+  # crt.sh por su huella SHA-256 (86:A1:EC:BA... y D7:A7:A0:FB...).
+  - id: VULN-EMUDHRA-ALMACEN
+    category: VULN
+    os: linux
+    tier: core
+    description: "El almacén de certificados del sistema todavía confía en las raíces de eMudhra (emSign ECC Root CA - G3 o AAA Certificate Services), cuyos intermedios permiten fabricar certificados válidos para cualquier web."
+    read: { type: file, path: "/etc/ssl/certs/ca-certificates.crt" }
+    comparator: nregex
+    expected: { good: '(MIICTjCCAdOgAwIBAgIKPPYHqWhwDtqLhDAKBggqhkjOPQQDAzBrMQswCQYDVQQG|GAYDVQQKDBFDb21vZG8gQ0EgTGltaXRlZDEhMB8GA1UEAwwYQUFBIENlcnRpZmlj)' }
+    points: 4
+    severity: high
+    criticality: ALTA
+    applicability:
+      anyOf:
+        - { file: "/etc/ssl/certs/ca-certificates.crt" }
+    requiresPrivilege: false
+    remediation: "Actualiza ca-certificates (apt-get update && apt-get install --only-upgrade ca-certificates; en Debian 12 queda en 20250419~deb12u2, en Debian 13 en 20250419+deb13u1 y en Ubuntu en 20260816ubuntu0.XX.04.1) y reinicia los servicios que hacen conexiones salientes. Los contenedores llevan su propio almacén: hay que reconstruir sus imágenes."
+    ensControls: ["op.exp.3", "mp.com.2"]
+    syntaxConfidence: review
+
+  - id: VULN-EMUDHRA-ALMACEN-RHEL
+    category: VULN
+    os: linux
+    tier: core
+    description: "El almacén de certificados del sistema (familia Red Hat) todavía confía en las raíces de eMudhra (emSign ECC Root CA - G3 o AAA Certificate Services), cuyos intermedios permiten fabricar certificados válidos para cualquier web."
+    read: { type: file, path: "/etc/pki/tls/certs/ca-bundle.crt" }
+    comparator: nregex
+    expected: { good: '(MIICTjCCAdOgAwIBAgIKPPYHqWhwDtqLhDAKBggqhkjOPQQDAzBrMQswCQYDVQQG|GAYDVQQKDBFDb21vZG8gQ0EgTGltaXRlZDEhMB8GA1UEAwwYQUFBIENlcnRpZmlj)' }
+    points: 4
+    severity: high
+    criticality: ALTA
+    applicability:
+      anyOf:
+        - { file: "/etc/pki/tls/certs/ca-bundle.crt" }
+    requiresPrivilege: false
+    remediation: "Actualiza ca-certificates (dnf upgrade ca-certificates) y reinicia los servicios que hacen conexiones salientes. Los contenedores llevan su propio almacén: hay que reconstruir sus imágenes."
+    ensControls: ["op.exp.3", "mp.com.2"]
+    syntaxConfidence: review
